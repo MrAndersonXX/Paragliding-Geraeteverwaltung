@@ -120,6 +120,12 @@ label {
     color: #2c3d4f;
 }
 
+.form-hint {
+    color: #5c7891;
+    font-size: 0.9rem;
+    margin: -0.5rem 0 0;
+}
+
 input, select, textarea, button {
     border: 1px solid #c7d2de;
     border-radius: 8px;

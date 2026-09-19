@@ -65,7 +65,7 @@ class NotificationService
         try {
             $greeting = $this->readResponse($socket);
             if (!$this->isResponse($greeting, 220)) {
-                return ['success' => false, 'message' => 'SMTP-Server hat keine gültige Begrüßung gesendet.'];
+                return ['success' => false, 'message' => $this->responseError('SMTP-Begrüßung', $greeting, $socket)];
             }
 
             $this->writeCommand($socket, 'EHLO glider-tracker');
@@ -128,5 +128,17 @@ class NotificationService
     private function isResponse(string $response, int $code): bool
     {
         return str_starts_with($response, (string) $code);
+    }
+
+    private function responseError(string $step, string $response, $socket): string
+    {
+        $meta = stream_get_meta_data($socket);
+        if (($meta['timed_out'] ?? false) || $response === '') {
+            return "{$step} fehlgeschlagen: keine Antwort innerhalb von 10 Sekunden. Prüfe Host, Port und Verschlüsselung (587/TLS oder 465/SSL).";
+        }
+
+        $line = trim(strtok($response, "\r\n"));
+        $line = preg_replace('/[^ -~]/', '', $line) ?: 'unbekannte Antwort';
+        return "{$step} fehlgeschlagen. SMTP-Server antwortete: " . substr($line, 0, 160);
     }
 }

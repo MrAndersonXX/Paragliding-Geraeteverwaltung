@@ -137,13 +137,15 @@ mkdir -p /volume1/docker/glider-tracker
 cd /volume1/docker/glider-tracker
 ```
 
-2. Das GitHub-Repository direkt in diesen Ordner klonen. Dadurch stehen auch die Dateien für die absoluten Synology-Mounts zur Verfügung:
+2. Das GitHub-Projekt ohne Git direkt als Archiv in diesen Ordner laden. Dadurch stehen auch die Dateien für die absoluten Synology-Mounts zur Verfügung:
 
 ```bash
-git clone https://github.com/MrAndersonXX/Paragliding-Ger-teverwaltung.git .
+curl -L https://codeload.github.com/MrAndersonXX/Paragliding-Ger-teverwaltung/tar.gz/refs/heads/main -o /tmp/glider-tracker.tar.gz
+tar -xzf /tmp/glider-tracker.tar.gz --strip-components=1 -C /volume1/docker/glider-tracker
+rm -f /tmp/glider-tracker.tar.gz
 ```
 
-Die Compose-Datei baut das PHP-Image anschließend direkt aus dem GitHub-Branch `main`. Die `.gitkeep`-Dateien sorgen dafür, dass ansonsten leere Verzeichnisse beim Klonen erhalten bleiben.
+Die Compose-Datei baut das PHP-Image anschließend aus dem lokal entpackten Projekt. Die `.gitkeep`-Dateien sorgen dafür, dass ansonsten leere Verzeichnisse beim Archiv erhalten bleiben.
 
 3. Eine `.env`-Datei ist nicht erforderlich. App-Name, Zeitzone, SMTP-Zugang und Kalenderzugang werden nach dem Start direkt unter `Einstellungen` beziehungsweise `Kalender` im Tool eingegeben und persistent gespeichert.
 

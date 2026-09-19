@@ -3,7 +3,7 @@ version: '3.9'
 services:
   app:
     build:
-      context: https://github.com/MrAndersonXX/Paragliding-Ger-teverwaltung.git#main
+      context: .
       dockerfile: docker/php/Dockerfile
     container_name: glider-app
     user: "0:0"

@@ -137,7 +137,13 @@ mkdir -p /volume1/docker/glider-tracker
 cd /volume1/docker/glider-tracker
 ```
 
-2. Den gesamten Inhalt des Projektordners einschließlich versteckter Dateien wie `.env.example` und `.gitignore` sowie des sichtbaren Ordners `docker/` hier ablegen. Die `.gitkeep`-Dateien sorgen dafür, dass ansonsten leere Verzeichnisse beim Kopieren erhalten bleiben.
+2. Das GitHub-Repository direkt in diesen Ordner klonen. Dadurch stehen auch die Dateien für die absoluten Synology-Mounts zur Verfügung:
+
+```bash
+git clone https://github.com/MrAndersonXX/Paragliding-Ger-teverwaltung.git .
+```
+
+Die Compose-Datei baut das PHP-Image anschließend direkt aus dem GitHub-Branch `main`. Die `.gitkeep`-Dateien sorgen dafür, dass ansonsten leere Verzeichnisse beim Klonen erhalten bleiben.
 
 3. `.env` aus `.env.example` kopieren und anpassen:
 

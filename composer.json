@@ -1,0 +1,22 @@
+{
+  "name": "glider/equipment-tracker",
+  "description": "Docker-based equipment tracking system for paragliding gear, rescue devices, harnesses, and helmets.",
+  "type": "project",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.2",
+    "ext-json": "*",
+    "ext-pdo": "*",
+    "ext-pdo_mysql": "*",
+    "ext-curl": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Glider\\": "src/"
+    }
+  },
+  "scripts": {
+    "check": "php scripts/checks.php",
+    "lint": "find src scripts public -name '*.php' -print0 | xargs -0 -n1 php -l"
+  }
+}

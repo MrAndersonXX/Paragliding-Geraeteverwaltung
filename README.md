@@ -1,0 +1,315 @@
+# Glider Equipment Tracker
+
+Ein Docker-basierter Web-Server für die Verwaltung und Überwachung von Gleitschirm-, Rettungsgerät-, Gurtzeug-, Helm- und Zubehör-Ausrüstung. Die Anwendung unterstützt:
+
+- Geräteverwaltung mit Hersteller, Typ, Größe, Seriennummer, Anschaffungsdatum, Besitzern und Status
+- Individuelle Prüfungsintervalle je Gerät
+- Erfassung von Hersteller-Nachprüfungen mit Gültigkeitsdauer
+- Ausmusterung von Geräten
+- Dokumente mit frei konfigurierbaren Kategorien
+- Mail-Benachrichtigungen bei bevorstehenden oder überfälligen Prüfungen
+- Zugriff auf freigegebene iCal-/Kalender-Feeds
+- Synology DiskStation 920+ kompatibles Docker-Setup
+
+Version: 0.1.0
+
+## Überblick
+
+Die Anwendung ist bewusst leichtgewichtig aufgebaut und für Synology DSM 7.x optimiert. Sie läuft als Docker-Stack mit:
+
+- PHP-FPM App-Container
+- Nginx Web-Container
+- MariaDB-Container
+- Redis-Container
+
+## Funktionsumfang
+
+### Geräteverwaltung
+
+Für jedes Gerät können erfasst werden:
+
+- Name / eindeutige Kennzeichnung
+- Kategorie (Gleitschirm, Rettungsgerät, Gurtzeug, Helm, Sonstiges)
+- Hersteller
+- Gerätetyp
+- Größe
+- Seriennummer
+- Anschaffungsdatum
+- Verbau / Benutzer / verantwortliche Person
+- Letzte Prüfung
+- Nächste Prüfung
+- Prüfungsintervall in Tagen oder Monaten
+- Maximal zulässige Betriebsdauer für Rettungsgeräte
+- Status (aktiv, in Prüfung, ausgemustert, defekt)
+
+### Prüfungslogik
+
+- Das Prüfungsintervall wird je Gerät individuell definiert.
+- Für jedes Gerät wird ein eigenes Startdatum für die erste Prüfung geführt.
+- Sowohl regelmäßige Prüfungen als auch Herstellernachprüfungen können erfasst werden.
+- Wenn für ein Rettungsgerät keine Herstellernachprüfung vorliegt, wird die maximale Betriebsdauer als Ausmusterungs-Horizon berücksichtigt.
+- Geräte können manuell als ausgemustert markiert werden.
+
+### Dokumente
+
+- Dokumente können als PDF oder andere zulässige Dateien hochgeladen werden.
+- Kategorien sind frei anlegbar, z. B. Kaufbeleg, Prüfprotokoll, Herstellerinfo, Wartung, Nachprüfung, Sonstiges.
+
+### Benachrichtigungen
+
+- E-Mail-Benachrichtigungen erfolgen über SMTP.
+- Für jedes Gerät können Benachrichtigungsintervalle individuell aktiviert werden.
+- Beispiel-Intervalle:
+  - 30 Tage vor Fälligkeit
+  - 14 Tage vor Fälligkeit
+  - 7 Tage vor Fälligkeit
+  - bei Überfälligkeit
+  - bei Ausmusterung
+
+### Kalenderzugriff
+
+- Ein iCal-/CalDAV-Feed kann konfiguriert werden.
+- Die App kann Ereignisse aus einem freigegebenen Kalender abrufen und mit Prüfungsdaten verknüpfen.
+- Dadurch lassen sich Prüfungs- und Wartungstermine in den bestehenden Kalender-Workflow integrieren.
+
+## Verzeichnisstruktur
+
+```text
+.
+├── docker/
+│   ├── nginx/
+│   │   └── default.conf
+│   └── php/
+│       ├── Dockerfile
+│       ├── entrypoint.sh
+│       └── php.ini
+├── .env.example
+├── .gitignore
+├── CHANGELOG.md
+├── VERSION
+├── composer.json
+├── docker-compose.yml
+├── README.md
+├── config/
+│   └── app.php
+├── database/
+│   ├── init.sql
+│   └── migrations/
+│       └── .gitkeep
+├── mysql/
+│   └── .gitkeep
+├── public/
+│   ├── index.php
+│   └── assets/
+│       └── styles.css
+├── scripts/
+│   └── checks.php
+├── src/
+│   ├── CalendarClient.php
+│   ├── Config.php
+│   ├── EquipmentRepository.php
+│   └── NotificationService.php
+├── redis/
+│   └── .gitkeep
+└── storage/
+│   ├── .gitkeep
+│   ├── app/
+│   │   └── .gitkeep
+│   └── data/
+│       └── .gitkeep
+```
+
+## Voraussetzungen
+
+- Synology DiskStation DSM 7.x
+- Docker und Docker Compose aktiv
+- Systempfad für Docker-Volumes, z. B. `/volume1/docker/glider-tracker`
+- Domain mit DNS und SSL-Zertifikat
+- Mailserver oder SMTP-Endpunkt
+- iCal-/Kalender-URL mit Zugriffsrechten
+
+## Synology-Deployment
+
+1. Ordner erstellen:
+
+```bash
+mkdir -p /volume1/docker/glider-tracker
+cd /volume1/docker/glider-tracker
+```
+
+2. Den gesamten Inhalt des Projektordners einschließlich versteckter Dateien wie `.env.example` und `.gitignore` sowie des sichtbaren Ordners `docker/` hier ablegen. Die `.gitkeep`-Dateien sorgen dafür, dass ansonsten leere Verzeichnisse beim Kopieren erhalten bleiben.
+
+3. `.env` aus `.env.example` kopieren und anpassen:
+
+```bash
+cp .env.example .env
+```
+
+Alternativ kann das Projekt auf einem Rechner mit TAR-Unterstützung als Archiv übertragen werden:
+
+```bash
+tar --exclude='.DS_Store' -czf glider-equipment-tracker.tar.gz .
+```
+
+Das Archiv auf der DiskStation nach `/volume1/docker/glider-tracker` entpacken. Vor dem Start müssen mindestens diese Dateien vorhanden sein:
+
+```text
+/volume1/docker/glider-tracker/docker-compose.yml
+/volume1/docker/glider-tracker/docker/php/Dockerfile
+/volume1/docker/glider-tracker/docker/nginx/default.conf
+/volume1/docker/glider-tracker/config/app.php
+/volume1/docker/glider-tracker/database/init.sql
+/volume1/docker/glider-tracker/public/index.php
+```
+
+Die folgenden Ordner werden als absolute Docker-Volume-Quellen verwendet und sind deshalb ebenfalls Bestandteil des Projektpakets:
+
+```text
+/volume1/docker/glider-tracker/public
+/volume1/docker/glider-tracker/src
+/volume1/docker/glider-tracker/config
+/volume1/docker/glider-tracker/storage
+/volume1/docker/glider-tracker/database
+/volume1/docker/glider-tracker/mysql
+/volume1/docker/glider-tracker/redis
+```
+
+Die Ordner `mysql` und `redis` müssen leer bleiben; ihre Inhalte werden beim ersten Containerstart von MariaDB beziehungsweise Redis angelegt. Die enthaltenen `.gitkeep`-Dateien dienen nur dazu, die Ordner beim Kopieren zu erhalten.
+
+4. Container starten:
+
+```bash
+docker compose down
+docker compose build --no-cache app
+docker compose up -d --force-recreate
+```
+
+Der PHP-Container bereitet den gemounteten Ordner `/volume1/docker/glider-tracker/storage` beim Start automatisch für den Webprozess vor. Dadurch können `storage/data/equipment.json`, `document_categories.json` und `settings.json` angelegt und geändert werden.
+
+Falls die Synology-ACL den Zugriff des Docker-Daemons blockiert, müssen die Berechtigungen des gemeinsamen Ordners `docker/glider-tracker` in DSM für den verwendeten Docker-Benutzer beziehungsweise die Docker-Gruppe auf Lesen und Schreiben gesetzt werden.
+
+Vor dem Start kann der Dockerfile-Pfad geprüft werden:
+
+```bash
+test -f docker/php/Dockerfile && echo "Dockerfile vorhanden"
+test -f docker/nginx/default.conf && echo "Nginx-Konfiguration vorhanden"
+```
+
+Falls du eine ältere Projektkopie verwendest, muss der versteckte Ordner `.docker` entweder vollständig mitkopiert werden oder durch den sichtbaren Ordner `docker` aus der aktuellen Projektversion ersetzt werden.
+
+Bei bereits vorhandenen Containern ist ein Neustart allein nicht ausreichend, wenn das Image noch den alten Entrypoint enthält. In diesem Fall `docker compose down` und anschließend `docker compose up -d --build --force-recreate` ausführen.
+
+Falls die JSON-Dateien bereits mit falschen Synology-Rechten angelegt wurden, einmalig auf der DiskStation ausführen:
+
+```bash
+cd /volume1/docker/glider-tracker
+chmod -R a+rwX storage
+docker compose down
+docker compose build --no-cache app
+docker compose up -d --force-recreate
+```
+
+Danach werden die persistenten Dateien unter `storage/data/` von PHP-FPM beschreibbar angelegt.
+
+Den Schreibtest und den tatsächlich verwendeten Container-Benutzer kannst du anschließend prüfen:
+
+```bash
+docker compose logs app
+docker compose exec app id
+docker compose exec app sh -lc 'touch /var/www/html/storage/data/.manual-write-test && rm /var/www/html/storage/data/.manual-write-test'
+```
+
+Der erwartete Benutzer ist `uid=0(root)`. Schlägt der manuelle Schreibtest trotz `uid=0` fehl, blockiert die DSM-ACL den Shared Folder. In diesem Fall im DSM für den Shared Folder `docker` beziehungsweise den Unterordner `glider-tracker` dem Docker-Dienst Lesen und Schreiben erlauben und den obigen Start wiederholen.
+
+Der PHP-FPM-Worker läuft in dieser privaten internen Installation bewusst als `root`, weil Synology-Bind-Mounts je nach DSM-ACL die Container-UID `www-data` trotz `chmod` nicht akzeptieren. Der Entrypoint testet den Schreibzugriff vor dem Start. Für eine öffentlich zugängliche Installation sollte stattdessen ein eigener DSM-Shared-Folder ohne restriktive ACL für einen festen Container-Benutzer eingerichtet werden.
+
+5. Logs prüfen:
+
+```bash
+docker compose logs -f
+```
+
+6. Webzugriff:
+
+- über den internen Reverse Proxy auf die Domain oder direkt über das Synology-Portal
+- Beispiel: `https://tracker.example.com`
+- Für einen direkten Zugriff ohne Reverse Proxy: `http://<synology-ip>:8282`
+
+## Konfiguration der Mailfunktion
+
+Die Mail-Konfiguration wird in der `.env` hinterlegt. Beispiel:
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=mail.example.com
+MAIL_PORT=587
+MAIL_USERNAME=benutzer
+MAIL_PASSWORD=passwort
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=tracker@example.com
+MAIL_FROM_NAME="Glider Equipment Tracker"
+```
+
+Die E-Mail-Tests sollten über die Anwendung selbst erfolgen. Die App erwartet ein funktionierendes SMTP-Setup auf dem Mailserver.
+
+## Konfiguration des iCal-Kalenders
+
+```env
+ICAL_URL=https://example.com/calendars/shared/ical.ics
+ICAL_USERNAME=
+ICAL_PASSWORD=
+```
+
+Die URL kann ein freigegebener Kalender oder ein öffentliches iCal-Feed sein. Bei geschützten Quellen müssen Benutzername und Passwort gesetzt werden.
+
+## Standard-Datenmodell
+
+Die Datenbank enthält typischerweise Tabellen wie:
+
+- `equipment`
+- `equipment_documents`
+- `document_categories`
+- `inspection_intervals`
+- `inspection_history`
+- `notifications`
+- `calendar_events`
+- `users`
+
+Ein komplettes Schema liegt in `database/init.sql` vor.
+
+## Beispiel-Benachrichtigungslogik
+
+Das System prüft regelmäßig:
+
+- Geräte mit nächster Prüfung innerhalb eines konfigurierten Zeitfensters
+- Überfällige Prüfungen
+- Geräte mit Ablauf der maximalen Betriebsdauer
+- Ausgemusterte Geräte
+
+## Betriebshinweise für Synology
+
+- Lokale Docker-Volumes sollten auf `/volume1/docker/glider-tracker/...` liegen.
+- Für Reverse Proxy und SSL ist der interne Synology Reverse Proxy geeignet.
+- In DSM können die Container mit einem eigenen Docker-Netzwerk gearbeitet werden.
+- Die persistenten Daten der MariaDB liegen im Volume unter `/volume1/docker/glider-tracker/mysql`.
+
+## Sicherheitsmaßnahmen
+
+- `.env` niemals in Git committen.
+- Zugangsdaten nur per Docker-Umgebungsvariablen oder `docker secret` verwalten.
+- Mail- und Kalender-Zugangsdaten nicht im Frontend sichtbar machen.
+- Für Produktivbetrieb eine eigene non-root-Umgebung und ein Backup-Plan ergänzen.
+- Die Konfigurationsdatei verwendet `getenv()` mit projektinternem Fallback und benötigt keine Laravel-Funktion `env()`.
+- Alle in Compose verwendeten Host-Volume-Ordner sind im Projekt enthalten, damit der Ordnertransfer auf die Synology vollständig bleibt.
+
+## Roadmap
+
+- Version 0.1.0: Grundgerüst, Docker-Setup, Geräteübersicht, Mail-Konfiguration, Kalender-Integration, Dokumentenkategorien
+- Version 0.2.0: vollständiger CRUD-Bereich für Geräte und Prüfungen
+- Version 0.3.0: Benutzerrollen, Rechteverwaltung und Audit-Logs
+- Version 0.4.0: CSV-Export, PDF-Dokumentation und Erinnerungs-Reports
+- Version 1.0.0: produktionsreife Freigabe für operative Nutzung
+
+## Lizenz
+
+Dieses Projekt dient als generische Grundlage für einen internen Betrieb. Die Nutzung ist frei, sofern die Dokumentation und die Sicherheitsprinzipien eingehalten werden.

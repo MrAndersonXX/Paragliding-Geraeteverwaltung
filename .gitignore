@@ -1,0 +1,22 @@
+# Environment
+.env
+.env.local
+
+# Composer / PHP
+/vendor/
+composer.lock
+
+# Docker / system
+.DS_Store
+*.log
+
+# Runtime
+/storage/
+!storage/app/
+
+# Editors
+.vscode/
+.idea/
+
+# Generated files
+*.tmp

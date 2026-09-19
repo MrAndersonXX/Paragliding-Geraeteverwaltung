@@ -140,12 +140,26 @@ cd /volume1/docker/glider-tracker
 2. Das GitHub-Projekt ohne Git direkt als Archiv in diesen Ordner laden. Dadurch stehen auch die Dateien für die absoluten Synology-Mounts zur Verfügung:
 
 ```bash
-curl -L https://codeload.github.com/MrAndersonXX/Paragliding-Ger-teverwaltung/tar.gz/refs/heads/main -o /tmp/glider-tracker.tar.gz
+curl -fL https://codeload.github.com/MrAndersonXX/Paragliding-Ger-teverwaltung/tar.gz/refs/heads/main -o /tmp/glider-tracker.tar.gz
 tar -xzf /tmp/glider-tracker.tar.gz --strip-components=1 -C /volume1/docker/glider-tracker
 rm -f /tmp/glider-tracker.tar.gz
 ```
 
 Die Compose-Datei baut das PHP-Image anschließend aus dem lokal entpackten Projekt. Die `.gitkeep`-Dateien sorgen dafür, dass ansonsten leere Verzeichnisse beim Archiv erhalten bleiben.
+
+Wenn das GitHub-Repository privat ist, liefert GitHub ohne Anmeldung `404 Not Found`. Dann auf der DiskStation einen GitHub-Token mit Leserechten für das Repository verwenden:
+
+```bash
+read -s GITHUB_TOKEN
+curl -fL -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+  https://codeload.github.com/MrAndersonXX/Paragliding-Ger-teverwaltung/tar.gz/refs/heads/main \
+  -o /tmp/glider-tracker.tar.gz
+unset GITHUB_TOKEN
+tar -xzf /tmp/glider-tracker.tar.gz --strip-components=1 -C /volume1/docker/glider-tracker
+rm -f /tmp/glider-tracker.tar.gz
+```
+
+Alternativ das Repository in GitHub im Browser öffnen, über `Code` und `Download ZIP` herunterladen und das ZIP per File Station nach `/volume1/docker/glider-tracker` übertragen.
 
 3. Eine `.env`-Datei ist nicht erforderlich. App-Name, Zeitzone, SMTP-Zugang und Kalenderzugang werden nach dem Start direkt unter `Einstellungen` beziehungsweise `Kalender` im Tool eingegeben und persistent gespeichert.
 

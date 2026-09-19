@@ -92,7 +92,6 @@ if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif;
         </div>
         <div class="row three-col">
             <label>Hersteller<input type="text" name="manufacturer" value="<?= e($editItem['manufacturer'] ?? ''); ?>" /></label>
-            <label>Gerätetyp<input type="text" name="equipment_type" value="<?= e($editItem['equipment_type'] ?? ''); ?>" /></label>
             <label>Größe<input type="text" name="size" value="<?= e($editItem['size'] ?? ''); ?>" /></label>
         </div>
         <div class="row three-col">

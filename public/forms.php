@@ -4,9 +4,7 @@ header('Location: /equipment.php');
 exit;
 
 require __DIR__ . '/../src/Storage.php';
-require __DIR__ . '/../src/CalendarClient.php';
 
-use Glider\CalendarClient;
 use Glider\Storage;
 
 Storage::ensure();
@@ -94,11 +92,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'from_address' => trim((string) ($_POST['mail_from_address'] ?? '')),
                 'from_name' => trim((string) ($_POST['mail_from_name'] ?? 'Glider Equipment Tracker')),
             ],
-            'calendar' => [
-                'url' => trim((string) ($_POST['calendar_url'] ?? '')),
-                'username' => trim((string) ($_POST['calendar_username'] ?? '')),
-                'password' => trim((string) ($_POST['calendar_password'] ?? '')),
-            ],
         ];
         Storage::saveSettings($settings);
         $message = 'E-Mail- und Kalender-Einstellungen wurden gespeichert.';
@@ -115,16 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if ($action === 'test_calendar') {
-        $calendarUrl = $settings['calendar']['url'] ?? '';
-        $calendarClient = new CalendarClient($calendarUrl, $settings['calendar']['username'] ?? '', $settings['calendar']['password'] ?? '');
-        $events = $calendarClient->fetchEvents();
-        $message = count($events) > 0 ? 'Kalenderzugriff erfolgreich. ' . count($events) . ' Ereignisse geladen.' : 'Kalenderzugriff fehlgeschlagen oder keine Ereignisse gefunden.';
-    }
 }
-
-$calendar = new CalendarClient($settings['calendar']['url'] ?? '', $settings['calendar']['username'] ?? '', $settings['calendar']['password'] ?? '');
-$calendarEvents = $calendar->fetchEvents();
 
 $equipmentByStatus = [
     'active' => 0,
@@ -200,9 +184,6 @@ foreach ($equipment as $item) {
                 <div class="row three-col">
                     <label>Hersteller
                         <input type="text" name="manufacturer" />
-                    </label>
-                    <label>Gerätetyp
-                        <input type="text" name="equipment_type" />
                     </label>
                     <label>Größe
                         <input type="text" name="size" />
@@ -366,18 +347,6 @@ foreach ($equipment as $item) {
                     </label>
                 </div>
 
-                <div class="row three-col">
-                    <label>iCal URL
-                        <input type="url" name="calendar_url" value="<?= htmlspecialchars($settings['calendar']['url'] ?? ''); ?>" />
-                    </label>
-                    <label>Kalender Benutzer
-                        <input type="text" name="calendar_username" value="<?= htmlspecialchars($settings['calendar']['username'] ?? ''); ?>" />
-                    </label>
-                    <label>Kalender Passwort
-                        <input type="password" name="calendar_password" value="<?= htmlspecialchars($settings['calendar']['password'] ?? ''); ?>" />
-                    </label>
-                </div>
-
                 <button type="submit">Einstellungen speichern</button>
             </form>
 
@@ -388,27 +357,7 @@ foreach ($equipment as $item) {
                     <button type="submit">Mail testen</button>
                 </form>
 
-                <form method="post" class="inline-form">
-                    <input type="hidden" name="action" value="test_calendar" />
-                    <button type="submit">Kalender testen</button>
-                </form>
             </div>
-        </section>
-
-        <section class="card">
-            <h2>Kalenderereignisse</h2>
-            <?php if (count($calendarEvents) === 0): ?>
-                <p>Keine Kalenderereignisse gefunden oder kein gültiger Feed konfiguriert.</p>
-            <?php else: ?>
-                <ul class="event-list">
-                    <?php foreach ($calendarEvents as $event): ?>
-                        <li>
-                            <strong><?= htmlspecialchars($event['summary'] ?? 'Ohne Titel'); ?></strong>
-                            <span><?= htmlspecialchars($event['start'] ?? ''); ?></span>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php endif; ?>
         </section>
     </main>
 </body>

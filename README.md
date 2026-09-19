@@ -8,7 +8,7 @@ Ein Docker-basierter Web-Server für die Verwaltung und Überwachung von Gleitsc
 - Ausmusterung von Geräten
 - Dokumente mit frei konfigurierbaren Kategorien
 - Mail-Benachrichtigungen bei bevorstehenden oder überfälligen Prüfungen
-- Zugriff auf freigegebene iCal-/Kalender-Feeds
+- Jahreskalender mit Prüfungs- und Geräteereignissen
 - Synology DiskStation 920+ kompatibles Docker-Setup
 
 Version: 0.1.0
@@ -66,11 +66,10 @@ Für jedes Gerät können erfasst werden:
   - bei Überfälligkeit
   - bei Ausmusterung
 
-### Kalenderzugriff
+### Kalender
 
-- Ein iCal-/CalDAV-Feed kann konfiguriert werden.
-- Die App kann Ereignisse aus einem freigegebenen Kalender abrufen und mit Prüfungsdaten verknüpfen.
-- Dadurch lassen sich Prüfungs- und Wartungstermine in den bestehenden Kalender-Workflow integrieren.
+- Die Kalenderansicht zeigt zwölf Monatszeilen mit Tagesraster.
+- Prüfungen, Herstellerprüfungen und Ausmusterungen werden direkt aus den Gerätedaten dargestellt.
 
 ## Verzeichnisstruktur
 
@@ -105,7 +104,6 @@ Für jedes Gerät können erfasst werden:
 ├── scripts/
 │   └── checks.php
 ├── src/
-│   ├── CalendarClient.php
 │   ├── Config.php
 │   ├── EquipmentRepository.php
 │   └── NotificationService.php
@@ -127,7 +125,6 @@ Für jedes Gerät können erfasst werden:
 - Systempfad für Docker-Volumes, z. B. `/volume1/docker/glider-tracker`
 - Domain mit DNS und SSL-Zertifikat
 - Mailserver oder SMTP-Endpunkt
-- iCal-/Kalender-URL mit Zugriffsrechten
 
 ## macOS-Installation (Apple Silicon)
 
@@ -309,16 +306,6 @@ MAIL_FROM_NAME="Glider Equipment Tracker"
 
 Die E-Mail-Tests sollten über die Anwendung selbst erfolgen. Die App erwartet ein funktionierendes SMTP-Setup auf dem Mailserver.
 
-## Konfiguration des iCal-Kalenders
-
-```env
-ICAL_URL=https://example.com/calendars/shared/ical.ics
-ICAL_USERNAME=
-ICAL_PASSWORD=
-```
-
-Die URL kann ein freigegebener Kalender oder ein öffentliches iCal-Feed sein. Bei geschützten Quellen müssen Benutzername und Passwort gesetzt werden.
-
 ## Standard-Datenmodell
 
 Die Datenbank enthält typischerweise Tabellen wie:
@@ -329,7 +316,6 @@ Die Datenbank enthält typischerweise Tabellen wie:
 - `inspection_intervals`
 - `inspection_history`
 - `notifications`
-- `calendar_events`
 - `users`
 
 Ein komplettes Schema liegt in `database/init.sql` vor.

@@ -83,8 +83,9 @@ class Storage
             ['id' => 1, 'name' => 'Gleitschirm'],
             ['id' => 2, 'name' => 'Rettungsgerät'],
             ['id' => 3, 'name' => 'Gurtzeug'],
-            ['id' => 4, 'name' => 'Helm'],
-            ['id' => 5, 'name' => 'Sonstiges'],
+            ['id' => 4, 'name' => 'Frontcontainer'],
+            ['id' => 5, 'name' => 'Helm'],
+            ['id' => 6, 'name' => 'Sonstiges'],
         ]);
     }
 
@@ -108,11 +109,6 @@ class Storage
                 'encryption' => 'tls',
                 'from_address' => '',
                 'from_name' => 'Glider Equipment Tracker',
-            ],
-            'calendar' => [
-                'url' => '',
-                'username' => '',
-                'password' => '',
             ],
         ]);
         return is_array($settings) ? $settings : [];
@@ -195,11 +191,6 @@ class Storage
                 'encryption' => 'tls',
                 'from_address' => '',
                 'from_name' => 'Glider Equipment Tracker',
-            ],
-            'calendar' => [
-                'url' => '',
-                'username' => '',
-                'password' => '',
             ],
         ]);
     }

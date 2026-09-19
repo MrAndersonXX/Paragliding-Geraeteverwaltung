@@ -19,15 +19,30 @@ foreach ($equipment as $existing) {
     }
 }
 $message = '';
+$formEquipmentType = '';
+$assignedEquipmentId = 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = isset($_POST['id']) && $_POST['id'] !== '' ? (int) $_POST['id'] : 0;
     $id = $id ?: ((count($equipment) > 0 ? max(array_map(fn ($item) => (int) ($item['id'] ?? 0), $equipment)) : 0) + 1);
+    $formEquipmentType = trim((string) ($_POST['equipment_type'] ?? ''));
+    $assignedEquipmentId = (int) ($_POST['assigned_equipment_id'] ?? 0);
+    $assignedEquipment = null;
+    foreach ($equipment as $existing) {
+        if ((int) ($existing['id'] ?? 0) === $assignedEquipmentId) {
+            $assignedEquipment = $existing;
+            break;
+        }
+    }
+    if ($formEquipmentType === 'Rettungsgerät' && ($assignedEquipment === null || !in_array(($assignedEquipment['equipment_type'] ?? $assignedEquipment['category'] ?? ''), ['Gurtzeug', 'Frontcontainer'], true))) {
+        $message = 'Ein Rettungsgerät muss einem Gerät vom Typ Gurtzeug oder Frontcontainer zugeordnet werden.';
+    }
     $item = [
         'id' => $id,
         'name' => trim((string) ($_POST['name'] ?? '')),
         'manufacturer' => trim((string) ($_POST['manufacturer'] ?? '')),
-        'equipment_type' => trim((string) ($_POST['equipment_type'] ?? '')),
+        'equipment_type' => $formEquipmentType,
+        'assigned_equipment_id' => $assignedEquipmentId,
         'size' => trim((string) ($_POST['size'] ?? '')),
         'serial_number' => trim((string) ($_POST['serial_number'] ?? '')),
         'purchase_date' => trim((string) ($_POST['purchase_date'] ?? '')),
@@ -52,36 +67,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'retired' => !empty($_POST['notification_retired']),
         ],
     ];
-    $item['next_inspection_date'] = InspectionCalculator::nextDate($item['last_inspection_date'], $item['inspection_interval_days']);
-    $updated = false;
-    foreach ($equipment as $index => $existing) {
-        if ((int) ($existing['id'] ?? 0) === $id) {
-            $equipment[$index] = $item;
-            $updated = true;
-            break;
+    if ($message === '') {
+        $item['next_inspection_date'] = InspectionCalculator::nextDate($item['last_inspection_date'], $item['inspection_interval_days']);
+        $updated = false;
+        foreach ($equipment as $index => $existing) {
+            if ((int) ($existing['id'] ?? 0) === $id) {
+                $equipment[$index] = $item;
+                $updated = true;
+                break;
+            }
         }
+        if (!$updated) {
+            $equipment[] = $item;
+        }
+        Storage::saveEquipment($equipment);
+        header('Location: /equipment_list.php?saved=1');
+        exit;
     }
-    if (!$updated) {
-        $equipment[] = $item;
-    }
-    Storage::saveEquipment($equipment);
-    header('Location: /equipment_list.php?saved=1');
-    exit;
 }
 
 pageHeader($editItem ? 'Gerät bearbeiten' : 'Neues Gerät');
 ?>
+<?php if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif; ?>
 <section class="card">
     <div class="section-actions"><a class="button-link" href="/equipment_list.php">Zur Geräteliste</a></div>
     <form method="post" class="stacked-form">
         <input type="hidden" name="id" value="<?= e($editItem['id'] ?? ''); ?>" />
         <div class="row two-col">
             <label>Gerätename<input type="text" name="name" value="<?= e($editItem['name'] ?? ''); ?>" required /></label>
-            <label>Gerätetyp<select name="equipment_type"><?php foreach ($equipmentTypes as $type): ?><?php $typeName = (string) ($type['name'] ?? ''); ?><option value="<?= e($typeName); ?>" <?= (($editItem['equipment_type'] ?? $editItem['category'] ?? '') === $typeName) ? 'selected' : ''; ?>><?= e($typeName); ?></option><?php endforeach; ?></select></label>
+            <label>Gerätetyp<select name="equipment_type" id="equipment-type" required><?php foreach ($equipmentTypes as $type): ?><?php $typeName = (string) ($type['name'] ?? ''); ?><option value="<?= e($typeName); ?>" <?= (($formEquipmentType ?: ($editItem['equipment_type'] ?? $editItem['category'] ?? '')) === $typeName) ? 'selected' : ''; ?>><?= e($typeName); ?></option><?php endforeach; ?></select></label>
         </div>
         <div class="row three-col">
             <label>Hersteller<input type="text" name="manufacturer" value="<?= e($editItem['manufacturer'] ?? ''); ?>" /></label>
-            <label>Gerätetyp<input type="text" name="equipment_type" value="<?= e($editItem['equipment_type'] ?? ''); ?>" /></label>
             <label>Größe<input type="text" name="size" value="<?= e($editItem['size'] ?? ''); ?>" /></label>
         </div>
         <div class="row three-col">
@@ -92,6 +109,7 @@ pageHeader($editItem ? 'Gerät bearbeiten' : 'Neues Gerät');
         <div class="row three-col">
             <label>Besitzer / Verbau<input type="text" name="owner" value="<?= e($editItem['owner'] ?? ''); ?>" /></label>
             <label>Verantwortliche Person<input type="text" name="assigned_user" value="<?= e($editItem['assigned_user'] ?? ''); ?>" /></label>
+            <label>Zugeordnetes Gerät<select name="assigned_equipment_id" id="assigned-equipment"><option value="0">Nicht zugeordnet</option><?php foreach ($equipment as $otherEquipment): ?><?php $otherId = (int) ($otherEquipment['id'] ?? 0); ?><?php if ($otherId === (int) ($editItem['id'] ?? 0)) { continue; } ?><?php $otherType = (string) ($otherEquipment['equipment_type'] ?? $otherEquipment['category'] ?? ''); ?><option value="<?= $otherId; ?>" data-equipment-type="<?= e($otherType); ?>" <?= ((int) ($editItem['assigned_equipment_id'] ?? 0) === $otherId || $assignedEquipmentId === $otherId) ? 'selected' : ''; ?>><?= e(($otherEquipment['name'] ?? '') . ' (' . $otherType . ')'); ?></option><?php endforeach; ?></select></label>
             <label>Zugeordneter Benutzer<select name="user_id"><option value="0">Nicht zugeordnet</option><?php foreach ($users as $user): ?><option value="<?= (int) ($user['id'] ?? 0); ?>" <?= ((int) ($editItem['user_id'] ?? 0) === (int) ($user['id'] ?? 0)) ? 'selected' : ''; ?>><?= e(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '') . ' ' . ($user['emoji'] ?? '')); ?></option><?php endforeach; ?></select></label>
             <label>Prüfungsintervall in Tagen<input type="number" name="inspection_interval_days" min="0" value="<?= e($editItem['inspection_interval_days'] ?? '365'); ?>" /></label>
         </div>
@@ -119,4 +137,17 @@ pageHeader($editItem ? 'Gerät bearbeiten' : 'Neues Gerät');
         <button type="submit"><?= $editItem ? 'Änderungen speichern' : 'Gerät speichern'; ?></button>
     </form>
 </section>
+<script>
+const equipmentType = document.getElementById('equipment-type');
+const assignedEquipment = document.getElementById('assigned-equipment');
+if (equipmentType && assignedEquipment) {
+    const updateAssignmentRequirement = function () {
+        const rescueSelected = equipmentType.value === 'Rettungsgerät';
+        assignedEquipment.required = rescueSelected;
+        assignedEquipment.closest('label').firstChild.textContent = rescueSelected ? 'Zugeordnetes Gerät *' : 'Zugeordnetes Gerät';
+    };
+    updateAssignmentRequirement();
+    equipmentType.addEventListener('change', updateAssignmentRequirement);
+}
+</script>
 <?php pageFooter();

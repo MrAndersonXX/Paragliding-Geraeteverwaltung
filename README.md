@@ -266,7 +266,7 @@ docker compose exec app sh -lc 'touch /var/www/html/storage/data/.manual-write-t
 
 Der erwartete Benutzer ist `uid=0(root)`. Schlägt der manuelle Schreibtest trotz `uid=0` fehl, blockiert die DSM-ACL den Shared Folder. In diesem Fall im DSM für den Shared Folder `docker` beziehungsweise den Unterordner `glider-tracker` dem Docker-Dienst Lesen und Schreiben erlauben und den obigen Start wiederholen.
 
-Der PHP-FPM-Worker läuft in dieser privaten internen Installation bewusst als `root`, weil Synology-Bind-Mounts je nach DSM-ACL die Container-UID `www-data` trotz `chmod` nicht akzeptieren. Der Entrypoint testet den Schreibzugriff vor dem Start. Für eine öffentlich zugängliche Installation sollte stattdessen ein eigener DSM-Shared-Folder ohne restriktive ACL für einen festen Container-Benutzer eingerichtet werden.
+Der PHP-FPM-Master startet als Container-Root, die PHP-FPM-Worker laufen mit dem vorgesehenen Benutzer `www-data`. Der Entrypoint bereitet den gemounteten Storage vor und testet den Schreibzugriff vor dem Start. Für eine öffentlich zugängliche Installation sollte zusätzlich ein eigener DSM-Shared-Folder ohne restriktive ACL eingerichtet werden.
 
 5. Logs prüfen:
 

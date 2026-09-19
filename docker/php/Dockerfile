@@ -23,8 +23,6 @@ COPY . /var/www/html
 
 RUN composer install --no-dev --no-interaction --prefer-dist --no-progress \
     && sed -i 's/^;clear_env = no/clear_env = no/' /usr/local/etc/php-fpm.d/www.conf \
-    && sed -i 's/^user = .*/user = root/' /usr/local/etc/php-fpm.d/www.conf \
-    && sed -i 's/^group = .*/group = root/' /usr/local/etc/php-fpm.d/www.conf \
     && chmod +x /var/www/html/docker/php/entrypoint.sh
 
 ENTRYPOINT ["/var/www/html/docker/php/entrypoint.sh"]

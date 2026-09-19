@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - 2026-09-19
+
+### Fixed
+- PHP-FPM now uses the required non-root `www-data` pool workers instead of an invalid root pool configuration.
+- Ignored generated MariaDB and Redis runtime files from the repository.
+
 ## [0.2.1] - 2026-09-19
 
 ### Changed

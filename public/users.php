@@ -55,7 +55,10 @@ if (isset($_GET['saved'])): ?><div class="alert">Benutzer wurde gespeichert.</di
     <form method="post" class="stacked-form">
         <input type="hidden" name="id" value="<?= e($editUser['id'] ?? ''); ?>" />
         <div class="row two-col"><label>Vorname<input type="text" name="first_name" value="<?= e($editUser['first_name'] ?? ''); ?>" required /></label><label>Nachname<input type="text" name="last_name" value="<?= e($editUser['last_name'] ?? ''); ?>" required /></label></div>
-        <div class="row two-col"><label>E-Mail-Adresse<input type="email" name="email" value="<?= e($editUser['email'] ?? ''); ?>" required /></label><label>Emoticon<select name="emoji"><option value="">Bitte auswählen</option><?php foreach ($emojiGroups as $groupName => $subgroups): ?><optgroup label="<?= e($groupName); ?>"><?php foreach ($subgroups as $subgroupName => $items): ?><?php foreach ($items as $item): ?><option value="<?= e($item['emoji']); ?>" <?= (($editUser['emoji'] ?? '') === $item['emoji']) ? 'selected' : ''; ?>><?= e($item['emoji']); ?> <?= e($subgroupName); ?>: <?= e($item['name']); ?></option><?php endforeach; ?><?php endforeach; ?></optgroup><?php endforeach; ?></select></label></div>
+        <label>E-Mail-Adresse<input type="email" name="email" value="<?= e($editUser['email'] ?? ''); ?>" required /></label>
+        <fieldset class="emoji-picker"><legend>Emoticon auswählen</legend><input type="hidden" name="emoji" id="selected-emoji" value="<?= e($editUser['emoji'] ?? ''); ?>" required />
+            <?php foreach ($emojiGroups as $groupName => $subgroups): ?><div class="emoji-group"><h3><?= e($groupName); ?></h3><?php foreach ($subgroups as $subgroupName => $items): ?><div class="emoji-subgroup"><h4><?= e($subgroupName); ?></h4><div class="emoji-grid"><?php foreach ($items as $item): ?><button type="button" class="emoji-option<?= (($editUser['emoji'] ?? '') === $item['emoji']) ? ' selected' : ''; ?>" data-emoji="<?= e($item['emoji']); ?>" title="<?= e($item['name']); ?>" aria-label="<?= e($item['name']); ?>"><?= e($item['emoji']); ?></button><?php endforeach; ?></div></div><?php endforeach; ?></div><?php endforeach; ?>
+        </fieldset>
         <button type="submit">Benutzer speichern</button>
     </form>
 </section>
@@ -63,4 +66,15 @@ if (isset($_GET['saved'])): ?><div class="alert">Benutzer wurde gespeichert.</di
 <?php if (!$users): ?><tr><td colspan="5">Noch keine Benutzer erfasst.</td></tr><?php endif; ?>
 <?php foreach ($users as $user): ?><tr><td class="emoji-cell"><?= e($user['emoji'] ?? ''); ?></td><td><?= e($user['first_name'] ?? ''); ?></td><td><?= e($user['last_name'] ?? ''); ?></td><td><?= e($user['email'] ?? ''); ?></td><td><a class="button-link" href="/users.php?edit=<?= (int) ($user['id'] ?? 0); ?>">Edit</a></td></tr><?php endforeach; ?>
 </tbody></table></div></section>
+<script>
+document.querySelectorAll('.emoji-option').forEach(function (button) {
+    button.addEventListener('click', function () {
+        document.querySelectorAll('.emoji-option.selected').forEach(function (selected) {
+            selected.classList.remove('selected');
+        });
+        button.classList.add('selected');
+        document.getElementById('selected-emoji').value = button.dataset.emoji;
+    });
+});
+</script>
 <?php pageFooter();

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.8] - 2026-09-19
+
+### Changed
+- Replaced the emoji name dropdown with a visual, categorized emoji grid.
+- Emoji names are now available as hover tooltips while selection is made by appearance.
+
 ## [0.2.7] - 2026-09-19
 
 ### Changed

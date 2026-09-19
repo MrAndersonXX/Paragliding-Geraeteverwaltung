@@ -82,6 +82,20 @@ class Storage
         return self::readJson('equipment_documents.json', []);
     }
 
+    public static function saveEquipmentDocuments(array $documents): void
+    {
+        self::writeJson('equipment_documents.json', $documents);
+    }
+
+    public static function equipmentUploadDirectory(): string
+    {
+        $directory = self::DATA_DIR . '/uploads';
+        if (!is_dir($directory)) {
+            mkdir($directory, 0775, true);
+        }
+        return $directory;
+    }
+
     public static function readEquipmentTypes(): array
     {
         return self::readJson('equipment_types.json', [

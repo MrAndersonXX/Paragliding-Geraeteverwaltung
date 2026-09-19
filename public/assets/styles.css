@@ -607,6 +607,22 @@ th {
     color: #8a2020;
 }
 
+.document-upload-row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.document-upload-row input[type="file"] {
+    flex: 1 1 16rem;
+}
+
+.document-upload-row select {
+    flex: 1 1 14rem;
+}
+
 @media (max-width: 700px) {
     .two-col,
     .three-col {

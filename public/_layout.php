@@ -24,19 +24,17 @@ function pageHeader(string $title): void
         <link rel="stylesheet" href="/assets/styles.css" />
     </head>
     <body>
-    <header class="topbar">
-        <div class="topbar-inner">
-            <a class="brand" href="/"><?= e($appName); ?></a>
-            <nav>
-                <a href="/">Übersicht</a>
-                <a href="/equipment_list.php">Geräte</a>
-                <a href="/users.php">Benutzer</a>
-                <a href="/categories.php">Dokumente</a>
-                <a href="/calendar.php">Kalender</a>
-                <a href="/settings.php">Einstellungen</a>
-            </nav>
-        </div>
-    </header>
+    <aside class="sidebar">
+        <a class="brand" href="/"><?= e($appName); ?></a>
+        <nav class="sidebar-nav">
+            <a href="/">Übersicht</a>
+            <a href="/equipment_list.php">Geräte</a>
+            <a href="/users.php">Benutzer</a>
+            <a href="/categories.php">Dokumente</a>
+            <a href="/calendar.php">Kalender</a>
+            <a href="/settings.php">Einstellungen</a>
+        </nav>
+    </aside>
     <main class="container">
         <div class="page-heading">
             <p class="eyebrow">Verwaltung</p>

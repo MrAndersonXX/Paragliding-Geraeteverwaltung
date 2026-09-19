@@ -1,6 +1,6 @@
 <?php
 
-require __DIR__ . '/../src/Storage.php';
+require __DIR__ . '/_layout.php';
 
 use Glider\Storage;
 
@@ -17,29 +17,7 @@ foreach ($equipment as $item) {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><?= htmlspecialchars($appName); ?></title>
-    <link rel="stylesheet" href="/assets/styles.css" />
-</head>
-<body>
-    <header class="topbar">
-        <div class="topbar-inner">
-            <h1><?= htmlspecialchars($appName); ?></h1>
-            <nav>
-                <a href="/">Übersicht</a>
-                <a href="/equipment.php">Geräte</a>
-                <a href="/categories.php">Dokumente</a>
-                <a href="/calendar.php">Kalender</a>
-                <a href="/settings.php">Einstellungen</a>
-            </nav>
-        </div>
-    </header>
-
-    <main class="container">
+<?php pageHeader('Übersicht'); ?>
         <section class="card page-intro">
             <p class="eyebrow">Startseite</p>
             <h2><?= htmlspecialchars($appName); ?></h2>
@@ -58,6 +36,4 @@ foreach ($equipment as $item) {
                 <li>Kalender: <?= !empty($settings['calendar']['url']) ? 'konfiguriert' : 'nicht konfiguriert'; ?></li>
             </ul>
         </section>
-    </main>
-</body>
-</html>
+<?php pageFooter(); ?>

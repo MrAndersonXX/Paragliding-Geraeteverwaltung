@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.5] - 2026-09-19
+
+### Changed
+- Replaced the top navigation with a shared responsive sidebar.
+- Ensured all pages show the complete navigation, including Benutzer.
+
 ## [0.2.4] - 2026-09-19
 
 ### Added

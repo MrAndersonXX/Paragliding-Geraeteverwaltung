@@ -151,13 +151,12 @@ body {
 }
 
 .calendar-grid {
-    overflow-x: auto;
+    overflow-x: hidden;
 }
 
 .month-row {
     display: grid;
-    grid-template-columns: 7.5rem max-content;
-    min-width: 57.5rem;
+    grid-template-columns: 7.5rem minmax(0, 1fr);
 }
 
 .month-row h3 {
@@ -171,14 +170,13 @@ body {
 
 .month-days {
     display: grid;
-    grid-template-columns: repeat(var(--days), 2.75rem);
+    grid-template-columns: repeat(31, minmax(0, 1fr));
 }
 
 .day-cell {
     border-bottom: 1px solid #e5ebf1;
     border-left: 1px solid #eef2f6;
     min-height: 5.2rem;
-    min-width: 2.75rem;
     overflow: visible;
     padding: 0.45rem 0.25rem;
     position: relative;

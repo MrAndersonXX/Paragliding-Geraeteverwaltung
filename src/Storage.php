@@ -77,6 +77,11 @@ class Storage
         self::writeJson('document_categories.json', $categories);
     }
 
+    public static function readEquipmentDocuments(): array
+    {
+        return self::readJson('equipment_documents.json', []);
+    }
+
     public static function readEquipmentTypes(): array
     {
         return self::readJson('equipment_types.json', [

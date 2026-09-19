@@ -31,7 +31,8 @@ class EmojiCatalog
             }
 
             [$codepoints, $description] = array_pad(explode('#', $line, 2), 2, '');
-            $emoji = trim((string) preg_replace('/;\s*fully-qualified.*$/', '', $codepoints));
+            $codepointList = trim((string) preg_replace('/;\s*fully-qualified.*$/', '', $codepoints));
+            $emoji = self::fromCodepoints($codepointList);
             $description = trim((string) preg_replace('/^\S+\s+E[\d.]+\s+/', '', trim($description)));
             if ($emoji === '' || $description === '') {
                 continue;
@@ -40,6 +41,30 @@ class EmojiCatalog
         }
 
         return $groups;
+    }
+
+    private static function fromCodepoints(string $codepointList): string
+    {
+        $emoji = '';
+        foreach (preg_split('/\s+/', $codepointList) as $codepoint) {
+            $value = hexdec($codepoint);
+            if ($value <= 0x7f) {
+                $emoji .= chr($value);
+            } elseif ($value <= 0x7ff) {
+                $emoji .= chr(0xc0 | ($value >> 6));
+                $emoji .= chr(0x80 | ($value & 0x3f));
+            } elseif ($value <= 0xffff) {
+                $emoji .= chr(0xe0 | ($value >> 12));
+                $emoji .= chr(0x80 | (($value >> 6) & 0x3f));
+                $emoji .= chr(0x80 | ($value & 0x3f));
+            } else {
+                $emoji .= chr(0xf0 | ($value >> 18));
+                $emoji .= chr(0x80 | (($value >> 12) & 0x3f));
+                $emoji .= chr(0x80 | (($value >> 6) & 0x3f));
+                $emoji .= chr(0x80 | ($value & 0x3f));
+            }
+        }
+        return $emoji;
     }
 
     public static function contains(string $emoji): bool

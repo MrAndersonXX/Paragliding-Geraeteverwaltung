@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.9] - 2026-09-19
+
+### Fixed
+- Unicode emoji codepoints are now converted to real UTF-8 emoji characters before rendering.
+- The user form is hidden by default and opens through `Neuer Benutzer` or `Edit`.
+
 ## [0.2.8] - 2026-09-19
 
 ### Changed

@@ -16,6 +16,7 @@ foreach ($users as $user) {
         break;
     }
 }
+$showForm = $editUser !== null || isset($_GET['new']);
 $message = '';
 $emojiGroups = EmojiCatalog::grouped();
 
@@ -51,6 +52,9 @@ pageHeader('Benutzer');
 if (isset($_GET['saved'])): ?><div class="alert">Benutzer wurde gespeichert.</div><?php endif; ?>
 <?php if ($message !== ''): ?><div class="alert alert-error"><?= e($message); ?></div><?php endif; ?>
 <section class="card">
+    <div class="list-toolbar"><div><h2>Benutzerverwaltung</h2><p>Benutzer werden für Gerätezuordnung und Prüfungsbenachrichtigungen verwendet.</p></div><a class="button-link" href="/users.php?new=1">Neuer Benutzer</a></div>
+</section>
+<?php if ($showForm): ?><section class="card">
     <h2><?= $editUser ? 'Benutzer bearbeiten' : 'Neuen Benutzer anlegen'; ?></h2>
     <form method="post" class="stacked-form">
         <input type="hidden" name="id" value="<?= e($editUser['id'] ?? ''); ?>" />
@@ -61,7 +65,7 @@ if (isset($_GET['saved'])): ?><div class="alert">Benutzer wurde gespeichert.</di
         </fieldset>
         <button type="submit">Benutzer speichern</button>
     </form>
-</section>
+</section><?php endif; ?>
 <section class="card"><h2>Benutzerliste</h2><div class="table-wrap"><table><thead><tr><th>Emoticon</th><th>Vorname</th><th>Nachname</th><th>E-Mail-Adresse</th><th>Aktion</th></tr></thead><tbody>
 <?php if (!$users): ?><tr><td colspan="5">Noch keine Benutzer erfasst.</td></tr><?php endif; ?>
 <?php foreach ($users as $user): ?><tr><td class="emoji-cell"><?= e($user['emoji'] ?? ''); ?></td><td><?= e($user['first_name'] ?? ''); ?></td><td><?= e($user['last_name'] ?? ''); ?></td><td><?= e($user['email'] ?? ''); ?></td><td><a class="button-link" href="/users.php?edit=<?= (int) ($user['id'] ?? 0); ?>">Edit</a></td></tr><?php endforeach; ?>

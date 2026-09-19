@@ -8,6 +8,7 @@ use Glider\InspectionCalculator;
 
 Storage::ensure();
 $equipment = Storage::readEquipment();
+$users = Storage::readUsers();
 $editId = (int) ($_GET['edit'] ?? 0);
 $editItem = null;
 foreach ($equipment as $existing) {
@@ -32,6 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'purchase_date' => trim((string) ($_POST['purchase_date'] ?? '')),
         'owner' => trim((string) ($_POST['owner'] ?? '')),
         'assigned_user' => trim((string) ($_POST['assigned_user'] ?? '')),
+        'user_id' => (int) ($_POST['user_id'] ?? 0),
         'status' => trim((string) ($_POST['status'] ?? 'active')),
         'inspection_interval_days' => (int) ($_POST['inspection_interval_days'] ?? 0),
         'inspection_start_date' => trim((string) ($_POST['inspection_start_date'] ?? '')),
@@ -90,6 +92,7 @@ pageHeader($editItem ? 'Gerät bearbeiten' : 'Neues Gerät');
         <div class="row three-col">
             <label>Besitzer / Verbau<input type="text" name="owner" value="<?= e($editItem['owner'] ?? ''); ?>" /></label>
             <label>Verantwortliche Person<input type="text" name="assigned_user" value="<?= e($editItem['assigned_user'] ?? ''); ?>" /></label>
+            <label>Zugeordneter Benutzer<select name="user_id"><option value="0">Nicht zugeordnet</option><?php foreach ($users as $user): ?><option value="<?= (int) ($user['id'] ?? 0); ?>" <?= ((int) ($editItem['user_id'] ?? 0) === (int) ($user['id'] ?? 0)) ? 'selected' : ''; ?>><?= e(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '') . ' ' . ($user['emoji'] ?? '')); ?></option><?php endforeach; ?></select></label>
             <label>Prüfungsintervall in Tagen<input type="number" name="inspection_interval_days" min="0" value="<?= e($editItem['inspection_interval_days'] ?? '365'); ?>" /></label>
         </div>
         <div class="row three-col">

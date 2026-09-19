@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.4] - 2026-09-19
+
+### Added
+- Added user management with first name, last name, email address and WhatsApp-style emoticon selection.
+- Equipment can be assigned to users through a dropdown.
+- Equipment list now shows the assigned emoticon, equipment type, manufacturer and equipment name in the first columns.
+- Added a CLI reminder command that sends due-inspection emails to the assigned user's email address.
+
 ## [0.2.3] - 2026-09-19
 
 ### Added

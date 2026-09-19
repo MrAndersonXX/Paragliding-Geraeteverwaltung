@@ -108,6 +108,44 @@ class NotificationService
         }
     }
 
+    public function sendInspectionReminder(string $to, string $equipmentName, string $dueDate): array
+    {
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'message' => 'Ungültige Empfängeradresse.'];
+        }
+        [$socket, $error] = $this->openAuthenticatedSocket();
+        if ($socket === false) {
+            return ['success' => false, 'message' => $error];
+        }
+        try {
+            $from = (string) ($this->mailConfig['from_address'] ?? '');
+            $fromName = (string) ($this->mailConfig['from_name'] ?? 'Glider Equipment Tracker');
+            $subject = 'Prüfung fällig: ' . $equipmentName;
+            $message = "Für das Gerät \"{$equipmentName}\" ist am {$dueDate} eine Prüfung fällig.\r\n\r\nBitte die Prüfung im Glider Equipment Tracker eintragen.";
+            $this->writeCommand($socket, 'MAIL FROM:<' . $from . '>');
+            if (!$this->isResponse($this->readResponse($socket), 250)) {
+                return ['success' => false, 'message' => 'SMTP hat die Absenderadresse abgelehnt.'];
+            }
+            $this->writeCommand($socket, 'RCPT TO:<' . $to . '>');
+            if (!$this->isResponse($this->readResponse($socket), 250, 251)) {
+                return ['success' => false, 'message' => 'SMTP hat die Empfängeradresse abgelehnt.'];
+            }
+            $this->writeCommand($socket, 'DATA');
+            if (!$this->isResponse($this->readResponse($socket), 354)) {
+                return ['success' => false, 'message' => 'SMTP hat den Nachrichtenversand abgelehnt.'];
+            }
+            $headers = 'From: ' . $fromName . ' <' . $from . ">\r\nTo: {$to}\r\nSubject: {$subject}\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n";
+            fwrite($socket, preg_replace('/^\./m', '..', $headers . $message) . "\r\n.\r\n");
+            if (!$this->isResponse($this->readResponse($socket), 250)) {
+                return ['success' => false, 'message' => 'SMTP hat die Erinnerungsmail nicht angenommen.'];
+            }
+            $this->writeCommand($socket, 'QUIT');
+            return ['success' => true, 'message' => 'Erinnerungsmail versendet.'];
+        } finally {
+            fclose($socket);
+        }
+    }
+
     private function openAuthenticatedSocket(): array
     {
         $host = trim((string) ($this->mailConfig['host'] ?? ''));

@@ -196,6 +196,15 @@ Alternativ kann das Projekt auf einem Rechner mit TAR-Unterstützung als Archiv 
 tar --exclude='.DS_Store' -czf glider-equipment-tracker.tar.gz .
 ```
 
+Fälligkeitsmails werden über den zugeordneten Benutzer versendet. Für einen täglichen Versand kann im Synology-Aufgabenplaner dieses Kommando ausgeführt werden:
+
+```bash
+cd /volume1/docker/glider-tracker
+docker compose exec -T app php scripts/send-reminders.php
+```
+
+Ein Gerät muss dafür einem Benutzer zugeordnet sein und die Benachrichtigung bei Überfälligkeit aktiviert haben.
+
 Das Archiv auf der DiskStation nach `/volume1/docker/glider-tracker` entpacken. Vor dem Start müssen mindestens diese Dateien vorhanden sein:
 
 ```text

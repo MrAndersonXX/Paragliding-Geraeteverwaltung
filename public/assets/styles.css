@@ -199,6 +199,11 @@ th {
     white-space: nowrap;
 }
 
+.emoji-cell {
+    font-size: 1.5rem;
+    text-align: center;
+}
+
 .action-form {
     display: inline;
 }

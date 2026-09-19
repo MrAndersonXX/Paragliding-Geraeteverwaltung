@@ -50,6 +50,16 @@ class Storage
         self::writeJson('equipment.json', $equipment);
     }
 
+    public static function readUsers(): array
+    {
+        return self::readJson('users.json', []);
+    }
+
+    public static function saveUsers(array $users): void
+    {
+        self::writeJson('users.json', $users);
+    }
+
     public static function readDocumentCategories(): array
     {
         $categories = self::readJson('document_categories.json', [

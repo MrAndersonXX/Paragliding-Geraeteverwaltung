@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.7] - 2026-09-19
+
+### Changed
+- Replaced the fixed emoji list with the official current Unicode emoji catalog.
+- Emoji selection is grouped by Unicode group and subgroup and refreshed during image builds.
+
 ## [0.2.6] - 2026-09-19
 
 ### Changed

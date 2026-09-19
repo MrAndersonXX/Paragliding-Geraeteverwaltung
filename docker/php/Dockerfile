@@ -22,6 +22,8 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 
 RUN composer install --no-dev --no-interaction --prefer-dist --no-progress \
+    && mkdir -p /var/www/html/resources \
+    && curl -fL https://unicode.org/Public/emoji/latest/emoji-test.txt -o /var/www/html/resources/emoji-test.txt \
     && sed -i 's/^;clear_env = no/clear_env = no/' /usr/local/etc/php-fpm.d/www.conf \
     && chmod +x /var/www/html/docker/php/entrypoint.sh
 

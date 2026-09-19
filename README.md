@@ -149,6 +149,8 @@ docker compose logs -f app
 docker compose exec app sh -lc 'touch /var/www/html/storage/data/.test && rm /var/www/html/storage/data/.test'
 ```
 
+Die Emoticon-Auswahl wird beim App-Image-Build aus der offiziellen aktuellen Unicode-Datei geladen und nach Unicode-Haupt- und Untergruppen kategorisiert. Nach einem neuen Unicode-Release das App-Image mit `--no-cache` neu bauen.
+
 Der Compose-Stack besteht bewusst nur aus PHP-FPM und Nginx. Die Anwendung speichert ihre Daten als JSON in `storage/data`; MariaDB und Redis werden für diesen MVP nicht benötigt.
 
 Zum Beenden:

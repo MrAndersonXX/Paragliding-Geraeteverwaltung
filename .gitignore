@@ -20,6 +20,9 @@ composer.lock
 /redis/*
 !/redis/.gitkeep
 
+# Downloaded Unicode emoji catalog
+/resources/emoji-test.txt
+
 # Editors
 .vscode/
 .idea/

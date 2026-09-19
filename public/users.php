@@ -1,8 +1,10 @@
 <?php
 
 require __DIR__ . '/_layout.php';
+require_once __DIR__ . '/../src/EmojiCatalog.php';
 
 use Glider\Storage;
+use Glider\EmojiCatalog;
 
 Storage::ensure();
 $users = Storage::readUsers();
@@ -15,7 +17,7 @@ foreach ($users as $user) {
     }
 }
 $message = '';
-$emojis = ['😀', '😎', '🪂', '🚀', '⭐', '🌈', '🔥', '🛠️', '🏔️', '❤️', '👍', '🙂', '🤝', '🎯', '🦅'];
+$emojiGroups = EmojiCatalog::grouped();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int) ($_POST['id'] ?? 0);
@@ -26,7 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($firstName === '' || $lastName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $message = 'Bitte Vorname, Nachname und eine gültige E-Mail-Adresse eingeben.';
     } else {
-        $item = ['id' => $id, 'first_name' => $firstName, 'last_name' => $lastName, 'email' => $email, 'emoji' => in_array($_POST['emoji'] ?? '', $emojis, true) ? $_POST['emoji'] : '🙂'];
+        $selectedEmoji = trim((string) ($_POST['emoji'] ?? ''));
+        $item = ['id' => $id, 'first_name' => $firstName, 'last_name' => $lastName, 'email' => $email, 'emoji' => EmojiCatalog::contains($selectedEmoji) ? $selectedEmoji : '😀'];
         $updated = false;
         foreach ($users as $index => $existing) {
             if ((int) ($existing['id'] ?? 0) === $id) {
@@ -52,7 +55,7 @@ if (isset($_GET['saved'])): ?><div class="alert">Benutzer wurde gespeichert.</di
     <form method="post" class="stacked-form">
         <input type="hidden" name="id" value="<?= e($editUser['id'] ?? ''); ?>" />
         <div class="row two-col"><label>Vorname<input type="text" name="first_name" value="<?= e($editUser['first_name'] ?? ''); ?>" required /></label><label>Nachname<input type="text" name="last_name" value="<?= e($editUser['last_name'] ?? ''); ?>" required /></label></div>
-        <div class="row two-col"><label>E-Mail-Adresse<input type="email" name="email" value="<?= e($editUser['email'] ?? ''); ?>" required /></label><label>Emoticon<select name="emoji"><?php foreach ($emojis as $emoji): ?><option value="<?= e($emoji); ?>" <?= (($editUser['emoji'] ?? '🙂') === $emoji) ? 'selected' : ''; ?>><?= e($emoji); ?></option><?php endforeach; ?></select></label></div>
+        <div class="row two-col"><label>E-Mail-Adresse<input type="email" name="email" value="<?= e($editUser['email'] ?? ''); ?>" required /></label><label>Emoticon<select name="emoji"><option value="">Bitte auswählen</option><?php foreach ($emojiGroups as $groupName => $subgroups): ?><optgroup label="<?= e($groupName); ?>"><?php foreach ($subgroups as $subgroupName => $items): ?><?php foreach ($items as $item): ?><option value="<?= e($item['emoji']); ?>" <?= (($editUser['emoji'] ?? '') === $item['emoji']) ? 'selected' : ''; ?>><?= e($item['emoji']); ?> <?= e($subgroupName); ?>: <?= e($item['name']); ?></option><?php endforeach; ?><?php endforeach; ?></optgroup><?php endforeach; ?></select></label></div>
         <button type="submit">Benutzer speichern</button>
     </form>
 </section>

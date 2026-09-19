@@ -149,6 +149,8 @@ docker compose logs -f app
 docker compose exec app sh -lc 'touch /var/www/html/storage/data/.test && rm /var/www/html/storage/data/.test'
 ```
 
+Der Compose-Stack besteht bewusst nur aus PHP-FPM und Nginx. Die Anwendung speichert ihre Daten als JSON in `storage/data`; MariaDB und Redis werden für diesen MVP nicht benötigt.
+
 Zum Beenden:
 
 ```bash
@@ -223,12 +225,9 @@ Die folgenden Ordner werden als projekt-relative Docker-Volume-Quellen verwendet
 /volume1/docker/glider-tracker/src
 /volume1/docker/glider-tracker/config
 /volume1/docker/glider-tracker/storage
-/volume1/docker/glider-tracker/database
-/volume1/docker/glider-tracker/mysql
-/volume1/docker/glider-tracker/redis
 ```
 
-Die Ordner `mysql` und `redis` müssen leer bleiben; ihre Inhalte werden beim ersten Containerstart von MariaDB beziehungsweise Redis angelegt. Die enthaltenen `.gitkeep`-Dateien dienen nur dazu, die Ordner beim Kopieren zu erhalten.
+Die Ordner `storage`, `public`, `src` und `config` werden als relative Mounts aus dem Projektordner verwendet.
 
 4. Container starten:
 

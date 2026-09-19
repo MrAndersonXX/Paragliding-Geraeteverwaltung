@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.6] - 2026-09-19
+
+### Changed
+- Reduced Docker Compose to the required PHP-FPM and Nginx services.
+- Removed unused MariaDB, Redis, database mounts and custom network configuration from the MVP deployment.
+
 ## [0.2.5] - 2026-09-19
 
 ### Changed

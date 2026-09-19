@@ -3,31 +3,18 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    container_name: glider-app
     restart: unless-stopped
     working_dir: /var/www/html
     environment:
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_DATABASE: glider_tracker
-      DB_USERNAME: glider
-      DB_PASSWORD: change-me
       TZ: Europe/Berlin
     volumes:
       - ./public:/var/www/html/public
       - ./src:/var/www/html/src
       - ./config:/var/www/html/config
       - ./storage:/var/www/html/storage
-      - ./database:/var/www/html/database
-    depends_on:
-      - db
-      - redis
-    networks:
-      - glider-network
 
   nginx:
     image: nginx:1.27-alpine
-    container_name: glider-nginx
     restart: unless-stopped
     ports:
       - "8282:80"
@@ -36,37 +23,3 @@ services:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - app
-    networks:
-      - glider-network
-
-  db:
-    image: mariadb:11.4
-    container_name: glider-db
-    restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: glider_tracker
-      MYSQL_USER: glider
-      MYSQL_PASSWORD: change-me
-      MYSQL_ROOT_PASSWORD: change-me-root
-      TZ: Europe/Berlin
-    volumes:
-      - ./mysql:/var/lib/mysql
-      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-    ports:
-      - "3306:3306"
-    networks:
-      - glider-network
-
-  redis:
-    image: redis:7-alpine
-    container_name: glider-redis
-    restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - ./redis:/data
-    networks:
-      - glider-network
-
-networks:
-  glider-network:
-    driver: bridge

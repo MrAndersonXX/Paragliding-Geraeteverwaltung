@@ -195,6 +195,35 @@ th {
     flex-wrap: wrap;
 }
 
+.actions {
+    white-space: nowrap;
+}
+
+.action-form {
+    display: inline;
+}
+
+.button-link,
+.button-muted {
+    display: inline-block;
+    margin-right: 0.4rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.button-link {
+    background: #0f4c81;
+    color: white;
+}
+
+.button-muted {
+    background: #687789;
+    color: white;
+}
+
 .tag-list {
     list-style: none;
     padding: 0;

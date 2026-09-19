@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-09-19
+
+### Changed
+- Unified equipment category and equipment type into one extensible `Gerätetyp` list.
+- Added equipment-type management for extending the dropdown without code changes.
+- Added live filtering and clickable column sorting to the equipment list.
+
 ## [0.2.9] - 2026-09-19
 
 ### Fixed

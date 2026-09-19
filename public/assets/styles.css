@@ -202,6 +202,26 @@ th {
     flex-wrap: wrap;
 }
 
+.filter-field {
+    display: block;
+    max-width: 28rem;
+    margin-bottom: 1rem;
+}
+
+.sort-button {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border: 0;
+    font-weight: 700;
+    text-align: left;
+}
+
+.sort-button:hover {
+    background: transparent;
+    color: #0f4c81;
+}
+
 .actions {
     white-space: nowrap;
 }

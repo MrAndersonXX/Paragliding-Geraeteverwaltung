@@ -77,6 +77,22 @@ class Storage
         self::writeJson('document_categories.json', $categories);
     }
 
+    public static function readEquipmentTypes(): array
+    {
+        return self::readJson('equipment_types.json', [
+            ['id' => 1, 'name' => 'Gleitschirm'],
+            ['id' => 2, 'name' => 'Rettungsgerät'],
+            ['id' => 3, 'name' => 'Gurtzeug'],
+            ['id' => 4, 'name' => 'Helm'],
+            ['id' => 5, 'name' => 'Sonstiges'],
+        ]);
+    }
+
+    public static function saveEquipmentTypes(array $types): void
+    {
+        self::writeJson('equipment_types.json', $types);
+    }
+
     public static function readSettings(): array
     {
         $settings = self::readJson('settings.json', [

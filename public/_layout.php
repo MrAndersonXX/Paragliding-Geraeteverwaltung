@@ -29,6 +29,7 @@ function pageHeader(string $title): void
         <nav class="sidebar-nav">
             <a href="/">Übersicht</a>
             <a href="/equipment_list.php">Geräte</a>
+            <a href="/equipment_types.php">Gerätetypen</a>
             <a href="/users.php">Benutzer</a>
             <a href="/categories.php">Dokumente</a>
             <a href="/calendar.php">Kalender</a>

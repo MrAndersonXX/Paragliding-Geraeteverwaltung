@@ -178,6 +178,8 @@ rm -f /tmp/glider-tracker.tar.gz
 
 Die Compose-Datei baut das PHP-Image anschließend aus dem lokal entpackten Projekt. Die `.gitkeep`-Dateien sorgen dafür, dass ansonsten leere Verzeichnisse beim Archiv erhalten bleiben.
 
+Gerätetypen werden unter `Gerätetypen` verwaltet. Dort können neue Werte angelegt werden; sie erscheinen anschließend automatisch im Gerätetyp-Dropdown.
+
 Wenn das GitHub-Repository privat ist, liefert GitHub ohne Anmeldung `404 Not Found`. Dann auf der DiskStation einen GitHub-Token mit Leserechten für das Repository verwenden:
 
 ```bash

@@ -9,6 +9,7 @@ use Glider\InspectionCalculator;
 Storage::ensure();
 $equipment = Storage::readEquipment();
 $users = Storage::readUsers();
+$equipmentTypes = Storage::readEquipmentTypes();
 $editId = (int) ($_GET['edit'] ?? 0);
 $editItem = null;
 foreach ($equipment as $existing) {
@@ -25,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item = [
         'id' => $id,
         'name' => trim((string) ($_POST['name'] ?? '')),
-        'category' => trim((string) ($_POST['category'] ?? 'Gleitschirm')),
         'manufacturer' => trim((string) ($_POST['manufacturer'] ?? '')),
         'equipment_type' => trim((string) ($_POST['equipment_type'] ?? '')),
         'size' => trim((string) ($_POST['size'] ?? '')),
@@ -77,7 +77,7 @@ pageHeader($editItem ? 'Gerät bearbeiten' : 'Neues Gerät');
         <input type="hidden" name="id" value="<?= e($editItem['id'] ?? ''); ?>" />
         <div class="row two-col">
             <label>Gerätename<input type="text" name="name" value="<?= e($editItem['name'] ?? ''); ?>" required /></label>
-            <label>Kategorie<select name="category"><?php foreach (['Gleitschirm', 'Rettungsgerät', 'Gurtzeug', 'Helm', 'Sonstiges'] as $category): ?><option <?= (($editItem['category'] ?? 'Gleitschirm') === $category) ? 'selected' : ''; ?>><?= e($category); ?></option><?php endforeach; ?></select></label>
+            <label>Gerätetyp<select name="equipment_type"><?php foreach ($equipmentTypes as $type): ?><?php $typeName = (string) ($type['name'] ?? ''); ?><option value="<?= e($typeName); ?>" <?= (($editItem['equipment_type'] ?? $editItem['category'] ?? '') === $typeName) ? 'selected' : ''; ?>><?= e($typeName); ?></option><?php endforeach; ?></select></label>
         </div>
         <div class="row three-col">
             <label>Hersteller<input type="text" name="manufacturer" value="<?= e($editItem['manufacturer'] ?? ''); ?>" /></label>

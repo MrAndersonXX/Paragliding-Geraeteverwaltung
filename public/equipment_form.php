@@ -46,8 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'size' => trim((string) ($_POST['size'] ?? '')),
         'serial_number' => trim((string) ($_POST['serial_number'] ?? '')),
         'purchase_date' => trim((string) ($_POST['purchase_date'] ?? '')),
-        'owner' => trim((string) ($_POST['owner'] ?? '')),
-        'assigned_user' => trim((string) ($_POST['assigned_user'] ?? '')),
         'user_id' => (int) ($_POST['user_id'] ?? 0),
         'status' => trim((string) ($_POST['status'] ?? 'active')),
         'inspection_interval_days' => (int) ($_POST['inspection_interval_days'] ?? 0),
@@ -107,8 +105,6 @@ pageHeader($editItem ? 'Gerät bearbeiten' : 'Neues Gerät');
             <label>Status<select name="status"><option value="active" <?= (($editItem['status'] ?? 'active') === 'active') ? 'selected' : ''; ?>>aktiv</option><option value="inspection" <?= (($editItem['status'] ?? '') === 'inspection') ? 'selected' : ''; ?>>in Prüfung</option><option value="retired" <?= (($editItem['status'] ?? '') === 'retired') ? 'selected' : ''; ?>>ausgemustert</option></select></label>
         </div>
         <div class="row three-col">
-            <label>Besitzer / Verbau<input type="text" name="owner" value="<?= e($editItem['owner'] ?? ''); ?>" /></label>
-            <label>Verantwortliche Person<input type="text" name="assigned_user" value="<?= e($editItem['assigned_user'] ?? ''); ?>" /></label>
             <label>Zugeordnetes Gerät<select name="assigned_equipment_id" id="assigned-equipment"><option value="0">Nicht zugeordnet</option><?php foreach ($equipment as $otherEquipment): ?><?php $otherId = (int) ($otherEquipment['id'] ?? 0); ?><?php if ($otherId === (int) ($editItem['id'] ?? 0)) { continue; } ?><?php $otherType = (string) ($otherEquipment['equipment_type'] ?? $otherEquipment['category'] ?? ''); ?><option value="<?= $otherId; ?>" data-equipment-type="<?= e($otherType); ?>" <?= ((int) ($editItem['assigned_equipment_id'] ?? 0) === $otherId || $assignedEquipmentId === $otherId) ? 'selected' : ''; ?>><?= e(($otherEquipment['name'] ?? '') . ' (' . $otherType . ')'); ?></option><?php endforeach; ?></select></label>
             <label>Zugeordneter Benutzer<select name="user_id"><option value="0">Nicht zugeordnet</option><?php foreach ($users as $user): ?><option value="<?= (int) ($user['id'] ?? 0); ?>" <?= ((int) ($editItem['user_id'] ?? 0) === (int) ($user['id'] ?? 0)) ? 'selected' : ''; ?>><?= e(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '') . ' ' . ($user['emoji'] ?? '')); ?></option><?php endforeach; ?></select></label>
             <label>Prüfungsintervall in Tagen<input type="number" name="inspection_interval_days" min="0" value="<?= e($editItem['inspection_interval_days'] ?? '365'); ?>" /></label>

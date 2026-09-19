@@ -2,7 +2,7 @@
 
 Ein Docker-basierter Web-Server für die Verwaltung und Überwachung von Gleitschirm-, Rettungsgerät-, Gurtzeug-, Helm- und Zubehör-Ausrüstung. Die Anwendung unterstützt:
 
-- Geräteverwaltung mit Hersteller, Typ, Größe, Seriennummer, Anschaffungsdatum, Besitzern und Status
+- Geräteverwaltung mit Hersteller, Typ, Größe, Seriennummer, Anschaffungsdatum und Status
 - Individuelle Prüfungsintervalle je Gerät
 - Erfassung von Hersteller-Nachprüfungen mit Gültigkeitsdauer
 - Ausmusterung von Geräten
@@ -35,7 +35,7 @@ Für jedes Gerät können erfasst werden:
 - Größe
 - Seriennummer
 - Anschaffungsdatum
-- Verbau / Benutzer / verantwortliche Person
+- Benutzerzuordnung
 - Letzte Prüfung
 - Nächste Prüfung
 - Prüfungsintervall in Tagen oder Monaten
@@ -105,7 +105,6 @@ Für jedes Gerät können erfasst werden:
 │   └── checks.php
 ├── src/
 │   ├── Config.php
-│   ├── EquipmentRepository.php
 │   └── NotificationService.php
 ├── redis/
 │   └── .gitkeep

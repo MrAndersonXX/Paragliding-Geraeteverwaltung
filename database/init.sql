@@ -16,8 +16,6 @@ CREATE TABLE IF NOT EXISTS equipment (
     size VARCHAR(255) NULL,
     serial_number VARCHAR(255) NULL,
     purchase_date DATE NULL,
-    owner VARCHAR(255) NULL,
-    assigned_user VARCHAR(255) NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'active',
     inspection_interval_days INT NULL,
     inspection_start_date DATE NULL,

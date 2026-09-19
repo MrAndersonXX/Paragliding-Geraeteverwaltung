@@ -4,6 +4,7 @@ require __DIR__ . '/_layout.php';
 require_once __DIR__ . '/../src/CalendarClient.php';
 
 use Glider\CalendarClient;
+use Glider\Storage;
 
 $settings = Storage::readSettings();
 $message = '';

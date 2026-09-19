@@ -2,6 +2,8 @@
 
 require __DIR__ . '/_layout.php';
 
+use Glider\Storage;
+
 $categories = Storage::readDocumentCategories();
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

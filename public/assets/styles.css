@@ -239,6 +239,12 @@ th {
     font-weight: 600;
 }
 
+.alert-error {
+    background: #fff0f0;
+    border-color: #e2aaaa;
+    color: #8a2020;
+}
+
 @media (max-width: 700px) {
     .two-col,
     .three-col {

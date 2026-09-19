@@ -1,6 +1,10 @@
 <?php
 
 require __DIR__ . '/_layout.php';
+require_once __DIR__ . '/../src/NotificationService.php';
+
+use Glider\Storage;
+use Glider\NotificationService;
 
 $settings = Storage::readSettings();
 $message = '';
@@ -19,17 +23,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'from_name' => trim((string) ($_POST['mail_from_name'] ?? 'Glider Equipment Tracker')),
     ];
     Storage::saveSettings($settings);
-    $message = 'Einstellungen wurden gespeichert.';
+    if (($_POST['action'] ?? '') === 'test_smtp') {
+        $result = (new NotificationService($settings['mail']))->testConnection();
+        $message = $result['message'];
+        $messageClass = $result['success'] ? 'alert' : 'alert alert-error';
+    } else {
+        $message = 'Einstellungen wurden gespeichert.';
+    }
 }
 
 pageHeader('Einstellungen');
-if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif; ?>
+if ($message !== ''): ?><div class="<?= e($messageClass ?? 'alert'); ?>"><?= e($message); ?></div><?php endif; ?>
 <section class="card"><h2>Anwendung</h2><form method="post" class="stacked-form">
     <div class="row two-col"><label>Anwendungsname<input type="text" name="app_name" value="<?= e($settings['app']['name'] ?? 'Glider Equipment Tracker'); ?>" required /></label><label>Zeitzone<input type="text" name="timezone" value="<?= e($settings['app']['timezone'] ?? 'Europe/Berlin'); ?>" required /></label></div>
     <h2>SMTP-Mailversand</h2>
     <div class="row two-col"><label>SMTP Host<input type="text" name="mail_host" value="<?= e($settings['mail']['host'] ?? ''); ?>" /></label><label>SMTP Port<input type="number" name="mail_port" value="<?= e($settings['mail']['port'] ?? '587'); ?>" /></label></div>
     <div class="row three-col"><label>Benutzername<input type="text" name="mail_username" value="<?= e($settings['mail']['username'] ?? ''); ?>" /></label><label>Passwort<input type="password" name="mail_password" value="<?= e($settings['mail']['password'] ?? ''); ?>" /></label><label>Verschlüsselung<select name="mail_encryption"><option value="tls" <?= (($settings['mail']['encryption'] ?? 'tls') === 'tls') ? 'selected' : ''; ?>>TLS</option><option value="ssl" <?= (($settings['mail']['encryption'] ?? '') === 'ssl') ? 'selected' : ''; ?>>SSL</option><option value="">Keine</option></select></label></div>
     <div class="row two-col"><label>Absenderadresse<input type="email" name="mail_from_address" value="<?= e($settings['mail']['from_address'] ?? ''); ?>" /></label><label>Absendername<input type="text" name="mail_from_name" value="<?= e($settings['mail']['from_name'] ?? 'Glider Equipment Tracker'); ?>" /></label></div>
-    <button type="submit">Einstellungen speichern</button>
+    <div class="button-row"><button type="submit" name="action" value="save_settings">Einstellungen speichern</button><button type="submit" name="action" value="test_smtp">Speichern und SMTP testen</button></div>
 </form></section>
 <?php pageFooter();

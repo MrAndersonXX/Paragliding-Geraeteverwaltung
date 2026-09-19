@@ -2,6 +2,8 @@
 
 require __DIR__ . '/_layout.php';
 
+use Glider\Storage;
+
 Storage::ensure();
 $equipment = Storage::readEquipment();
 $message = '';

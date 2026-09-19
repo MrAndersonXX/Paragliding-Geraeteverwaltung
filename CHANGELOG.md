@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2026-09-19
+
+### Changed
+- Docker Compose now uses project-relative volume paths and relies on Docker's native multi-architecture image selection for Apple Silicon and Synology.
+- Added macOS Docker Desktop setup instructions.
+
 ## [0.2.0] - 2026-09-19
 
 ### Changed

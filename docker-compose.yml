@@ -17,11 +17,11 @@ services:
       DB_PASSWORD: change-me
       TZ: Europe/Berlin
     volumes:
-      - /volume1/docker/glider-tracker/public:/var/www/html/public
-      - /volume1/docker/glider-tracker/src:/var/www/html/src
-      - /volume1/docker/glider-tracker/config:/var/www/html/config
-      - /volume1/docker/glider-tracker/storage:/var/www/html/storage
-      - /volume1/docker/glider-tracker/database:/var/www/html/database
+      - ./public:/var/www/html/public
+      - ./src:/var/www/html/src
+      - ./config:/var/www/html/config
+      - ./storage:/var/www/html/storage
+      - ./database:/var/www/html/database
     depends_on:
       - db
       - redis
@@ -35,8 +35,8 @@ services:
     ports:
       - "8282:80"
     volumes:
-      - /volume1/docker/glider-tracker/public:/var/www/html/public:ro
-      - /volume1/docker/glider-tracker/docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./public:/var/www/html/public:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - app
     networks:
@@ -53,8 +53,8 @@ services:
       MYSQL_ROOT_PASSWORD: change-me-root
       TZ: Europe/Berlin
     volumes:
-      - /volume1/docker/glider-tracker/mysql:/var/lib/mysql
-      - /volume1/docker/glider-tracker/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./mysql:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     ports:
       - "3306:3306"
     networks:
@@ -66,7 +66,7 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
-      - /volume1/docker/glider-tracker/redis:/data
+      - ./redis:/data
     networks:
       - glider-network
 

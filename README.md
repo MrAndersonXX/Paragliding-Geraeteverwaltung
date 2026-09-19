@@ -121,12 +121,39 @@ Für jedes Gerät können erfasst werden:
 
 ## Voraussetzungen
 
+- macOS 13 oder neuer mit Apple Silicon (M1/M2/M3/M4) und Docker Desktop
 - Synology DiskStation DSM 7.x
 - Docker und Docker Compose aktiv
 - Systempfad für Docker-Volumes, z. B. `/volume1/docker/glider-tracker`
 - Domain mit DNS und SSL-Zertifikat
 - Mailserver oder SMTP-Endpunkt
 - iCal-/Kalender-URL mit Zugriffsrechten
+
+## macOS-Installation (Apple Silicon)
+
+Docker Desktop für Apple Silicon installieren und anschließend im Terminal im Projektordner ausführen:
+
+```bash
+cd "/Users/DEIN-BENUTZER/Paragliding Geräteverwaltung"
+docker compose build --no-cache app
+docker compose up -d --force-recreate
+docker compose ps
+```
+
+Die Compose-Datei verwendet projekt-relative Volumes. Docker Desktop wählt auf Apple Silicon automatisch ARM64; auf der Synology wird automatisch die passende x86_64-Variante verwendet. Deshalb ist keine Plattformangabe und keine `.env`-Datei erforderlich.
+
+Die Anwendung ist unter [http://localhost:8282](http://localhost:8282) erreichbar. Logs und ein Schreibtest:
+
+```bash
+docker compose logs -f app
+docker compose exec app sh -lc 'touch /var/www/html/storage/data/.test && rm /var/www/html/storage/data/.test'
+```
+
+Zum Beenden:
+
+```bash
+docker compose down
+```
 
 ## Synology-Deployment
 
@@ -137,7 +164,7 @@ mkdir -p /volume1/docker/glider-tracker
 cd /volume1/docker/glider-tracker
 ```
 
-2. Das GitHub-Projekt ohne Git direkt als Archiv in diesen Ordner laden. Dadurch stehen auch die Dateien für die absoluten Synology-Mounts zur Verfügung:
+2. Das GitHub-Projekt ohne Git direkt als Archiv in diesen Ordner laden. Die Compose-Datei verwendet projekt-relative Mounts, daher funktioniert der Stack unabhängig vom konkreten Synology-Pfad:
 
 ```bash
 curl -fL https://codeload.github.com/MrAndersonXX/Paragliding-Ger-teverwaltung/tar.gz/refs/heads/main -o /tmp/glider-tracker.tar.gz
@@ -180,7 +207,7 @@ Das Archiv auf der DiskStation nach `/volume1/docker/glider-tracker` entpacken. 
 /volume1/docker/glider-tracker/public/index.php
 ```
 
-Die folgenden Ordner werden als absolute Docker-Volume-Quellen verwendet und sind deshalb ebenfalls Bestandteil des Projektpakets:
+Die folgenden Ordner werden als projekt-relative Docker-Volume-Quellen verwendet und sind deshalb ebenfalls Bestandteil des Projektpakets:
 
 ```text
 /volume1/docker/glider-tracker/public

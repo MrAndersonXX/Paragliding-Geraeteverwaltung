@@ -1,59 +1,61 @@
 <?php
 
-require __DIR__ . '/../src/Config.php';
+require __DIR__ . '/../src/Storage.php';
 
-$appConfig = \Glider\Config::load();
+use Glider\Storage;
+
+Storage::ensure();
+$settings = Storage::readSettings();
+$appName = $settings['app']['name'] ?? 'Glider Equipment Tracker';
+$timezone = $settings['app']['timezone'] ?? 'Europe/Berlin';
+$equipment = Storage::readEquipment();
+$counts = ['active' => 0, 'inspection' => 0, 'retired' => 0];
+foreach ($equipment as $item) {
+    $status = $item['status'] ?? 'active';
+    if (isset($counts[$status])) {
+        $counts[$status]++;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><?= htmlspecialchars($appConfig['name']); ?></title>
+    <title><?= htmlspecialchars($appName); ?></title>
     <link rel="stylesheet" href="/assets/styles.css" />
 </head>
 <body>
     <header class="topbar">
         <div class="topbar-inner">
-            <h1><?= htmlspecialchars($appConfig['name']); ?></h1>
+            <h1><?= htmlspecialchars($appName); ?></h1>
             <nav>
-                <a href="/forms.php">Geräteverwaltung</a>
-                <a href="/forms.php#settings">Einstellungen</a>
+                <a href="/">Übersicht</a>
+                <a href="/equipment.php">Geräte</a>
+                <a href="/categories.php">Dokumente</a>
+                <a href="/calendar.php">Kalender</a>
+                <a href="/settings.php">Einstellungen</a>
             </nav>
         </div>
     </header>
 
     <main class="container">
-        <section class="card">
-            <h2>Systemstatus</h2>
-            <ul>
-                <li>Umgebung: <?= htmlspecialchars($appConfig['env']); ?></li>
-                <li>Zeitzone: <?= htmlspecialchars($appConfig['timezone']); ?></li>
-                <li>SMTP: <?= !empty($appConfig['mail']['host']) ? 'konfiguriert' : 'nicht konfiguriert'; ?></li>
-                <li>iCal: <?= !empty($appConfig['ical']['url']) ? 'konfiguriert' : 'nicht konfiguriert'; ?></li>
-            </ul>
+        <section class="card page-intro">
+            <p class="eyebrow">Startseite</p>
+            <h2><?= htmlspecialchars($appName); ?></h2>
+            <p>Verwalte Geräte, Prüfungen, Dokumentkategorien, Benachrichtigungen und Kalenderzugriff über die einzelnen Bereiche.</p>
         </section>
-
-        <section class="card">
-            <h2>Verfügbare Gerätekategorien</h2>
-            <ul>
-                <li>Gleitschirm</li>
-                <li>Rettungsgerät</li>
-                <li>Gurtzeug</li>
-                <li>Helm</li>
-                <li>Sonstiges</li>
-            </ul>
+        <section class="card stats-grid">
+            <div class="stat-box"><span>aktive Geräte</span><strong><?= $counts['active']; ?></strong></div>
+            <div class="stat-box"><span>Prüfung</span><strong><?= $counts['inspection']; ?></strong></div>
+            <div class="stat-box"><span>ausgemustert</span><strong><?= $counts['retired']; ?></strong></div>
         </section>
-
         <section class="card">
-            <h2>Funktionsumfang</h2>
+            <h2>System</h2>
             <ul>
-                <li>Geräteverwaltung</li>
-                <li>Prüfungsintervalle</li>
-                <li>Herstellernachprüfung</li>
-                <li>Dokumentenmanagement mit Kategorien</li>
-                <li>Mail-Benachrichtigungen</li>
-                <li>iCal-Kalenderzugriff</li>
+                <li>Zeitzone: <?= htmlspecialchars($timezone); ?></li>
+                <li>SMTP: <?= !empty($settings['mail']['host']) ? 'konfiguriert' : 'nicht konfiguriert'; ?></li>
+                <li>Kalender: <?= !empty($settings['calendar']['url']) ? 'konfiguriert' : 'nicht konfiguriert'; ?></li>
             </ul>
         </section>
     </main>

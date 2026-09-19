@@ -145,11 +145,7 @@ git clone https://github.com/MrAndersonXX/Paragliding-Ger-teverwaltung.git .
 
 Die Compose-Datei baut das PHP-Image anschließend direkt aus dem GitHub-Branch `main`. Die `.gitkeep`-Dateien sorgen dafür, dass ansonsten leere Verzeichnisse beim Klonen erhalten bleiben.
 
-3. `.env` aus `.env.example` kopieren und anpassen:
-
-```bash
-cp .env.example .env
-```
+3. Eine `.env`-Datei ist nicht erforderlich. App-Name, Zeitzone, SMTP-Zugang und Kalenderzugang werden nach dem Start direkt unter `Einstellungen` beziehungsweise `Kalender` im Tool eingegeben und persistent gespeichert.
 
 Alternativ kann das Projekt auf einem Rechner mit TAR-Unterstützung als Archiv übertragen werden:
 

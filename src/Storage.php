@@ -70,6 +70,10 @@ class Storage
     public static function readSettings(): array
     {
         $settings = self::readJson('settings.json', [
+            'app' => [
+                'name' => 'Glider Equipment Tracker',
+                'timezone' => 'Europe/Berlin',
+            ],
             'mail' => [
                 'host' => '',
                 'port' => '587',
@@ -153,6 +157,10 @@ class Storage
         ]);
 
         self::saveSettings([
+            'app' => [
+                'name' => 'Glider Equipment Tracker',
+                'timezone' => 'Europe/Berlin',
+            ],
             'mail' => [
                 'host' => '',
                 'port' => '587',

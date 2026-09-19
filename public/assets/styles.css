@@ -5,6 +5,29 @@ body {
     color: #1c2430;
 }
 
+.brand {
+    color: white;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.page-heading {
+    margin-bottom: -0.5rem;
+}
+
+.page-heading h1 {
+    margin: 0;
+}
+
+.eyebrow {
+    color: #5c7891;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 0 0.35rem;
+}
+
 .topbar {
     background: #102a43;
     color: white;

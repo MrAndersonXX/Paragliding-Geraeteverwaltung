@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-09-19
+
+### Changed
+- `.env` is no longer required at runtime; application, SMTP and calendar settings are entered in the web interface and stored persistently.
+- Split the dashboard, equipment, document categories, settings and calendar areas into separate pages.
+- Docker Compose now uses fixed defaults and no longer depends on Compose environment interpolation.
+
 ## [0.1.9] - 2026-09-19
 
 ### Fixed

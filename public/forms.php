@@ -1,5 +1,8 @@
 <?php
 
+header('Location: /equipment.php');
+exit;
+
 require __DIR__ . '/../src/Storage.php';
 require __DIR__ . '/../src/CalendarClient.php';
 

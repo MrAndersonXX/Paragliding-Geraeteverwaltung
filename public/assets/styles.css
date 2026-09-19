@@ -200,6 +200,47 @@ body {
     height: 1.2rem;
 }
 
+.info-field {
+    background: #0f4c81;
+    border-radius: 50%;
+    color: #fff;
+    cursor: help;
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    height: 1rem;
+    line-height: 1rem;
+    margin-left: 0.2rem;
+    position: relative;
+    text-align: center;
+    vertical-align: middle;
+    width: 1rem;
+}
+
+.info-explanation {
+    background: #243746;
+    border-radius: 4px;
+    bottom: calc(100% + 0.5rem);
+    color: #fff;
+    display: none;
+    font-size: 0.78rem;
+    font-weight: 400;
+    left: 50%;
+    line-height: 1.35;
+    padding: 0.55rem 0.7rem;
+    position: absolute;
+    text-align: left;
+    transform: translateX(-50%);
+    white-space: normal;
+    width: 15rem;
+    z-index: 5;
+}
+
+.info-field:hover .info-explanation,
+.info-field:focus .info-explanation {
+    display: block;
+}
+
 .calendar-event {
     border-radius: 999px;
     display: block;

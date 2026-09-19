@@ -112,7 +112,7 @@ pageHeader($editItem ? 'Gerät bearbeiten' : 'Neues Gerät');
         <div class="row three-col">
             <label>Beginn Prüfungsdatum<input type="date" name="inspection_start_date" value="<?= e($editItem['inspection_start_date'] ?? ''); ?>" /></label>
             <label>Letzte Prüfung<input type="date" name="last_inspection_date" value="<?= e($editItem['last_inspection_date'] ?? ''); ?>" /></label>
-            <label>Nächste Prüfung<input type="date" name="next_inspection_date" value="<?= e($editItem['next_inspection_date'] ?? ''); ?>" /></label>
+            <label>Nächste Prüfung <span class="info-field" tabindex="0" aria-label="Information zur Berechnung">i<span class="info-explanation" role="tooltip">Wird automatisch aus der letzten Prüfung und dem Prüfungsintervall berechnet.</span></span><input type="date" name="next_inspection_date" value="<?= e($editItem['next_inspection_date'] ?? ''); ?>" readonly /></label>
         </div>
         <div class="row three-col">
             <label>Hersteller-Nachprüfung<input type="date" name="manufacturer_check_date" value="<?= e($editItem['manufacturer_check_date'] ?? ''); ?>" /></label>

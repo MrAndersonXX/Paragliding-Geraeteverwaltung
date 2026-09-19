@@ -1,8 +1,10 @@
 <?php
 
 require __DIR__ . '/_layout.php';
+require_once __DIR__ . '/../src/InspectionCalculator.php';
 
 use Glider\Storage;
+use Glider\InspectionCalculator;
 
 Storage::ensure();
 $equipment = Storage::readEquipment();
@@ -48,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'retired' => !empty($_POST['notification_retired']),
         ],
     ];
+    $item['next_inspection_date'] = InspectionCalculator::nextDate($item['last_inspection_date'], $item['inspection_interval_days']);
     $updated = false;
     foreach ($equipment as $index => $existing) {
         if ((int) ($existing['id'] ?? 0) === $id) {

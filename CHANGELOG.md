@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.3] - 2026-09-19
+
+### Added
+- Added a per-device "Prüfung eintragen" action that stores the last inspection date.
+- Next inspection dates are calculated automatically from the last inspection and interval in days.
+
 ## [0.2.2] - 2026-09-19
 
 ### Fixed

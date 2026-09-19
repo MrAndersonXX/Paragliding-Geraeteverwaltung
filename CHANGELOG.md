@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2026-09-19
+
+### Added
+- Added equipment-type usage counts and edit/delete actions.
+- Prevented deletion of equipment types still assigned to devices.
+
 ## [0.3.0] - 2026-09-19
 
 ### Changed

@@ -214,6 +214,29 @@ th {
     text-decoration: none;
 }
 
+.list-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.list-toolbar h2,
+.list-toolbar p {
+    margin-top: 0;
+}
+
+.list-toolbar p {
+    margin-bottom: 0;
+    color: #5c7891;
+}
+
+.section-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
 .button-link {
     background: #0f4c81;
     color: white;

@@ -29,7 +29,7 @@ function pageHeader(string $title): void
             <a class="brand" href="/"><?= e($appName); ?></a>
             <nav>
                 <a href="/">Übersicht</a>
-                <a href="/equipment.php">Geräte</a>
+                <a href="/equipment_list.php">Geräte</a>
                 <a href="/categories.php">Dokumente</a>
                 <a href="/calendar.php">Kalender</a>
                 <a href="/settings.php">Einstellungen</a>

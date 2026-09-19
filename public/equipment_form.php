@@ -1,15 +1,11 @@
 <?php
 
-header('Location: /equipment_list.php');
-exit;
-
 require __DIR__ . '/_layout.php';
 
 use Glider\Storage;
 
 Storage::ensure();
 $equipment = Storage::readEquipment();
-$message = '';
 $editId = (int) ($_GET['edit'] ?? 0);
 $editItem = null;
 foreach ($equipment as $existing) {
@@ -18,21 +14,10 @@ foreach ($equipment as $existing) {
         break;
     }
 }
+$message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? 'save_equipment';
     $id = isset($_POST['id']) && $_POST['id'] !== '' ? (int) $_POST['id'] : 0;
-    if ($action === 'archive_equipment') {
-        foreach ($equipment as $index => $existing) {
-            if ((int) ($existing['id'] ?? 0) === $id) {
-                $equipment[$index]['status'] = 'retired';
-                $equipment[$index]['retired_at'] = date('Y-m-d');
-                break;
-            }
-        }
-        Storage::saveEquipment($equipment);
-        $message = 'Gerät wurde archiviert.';
-    } else {
     $id = $id ?: ((count($equipment) > 0 ? max(array_map(fn ($item) => (int) ($item['id'] ?? 0), $equipment)) : 0) + 1);
     $item = [
         'id' => $id,
@@ -75,16 +60,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $equipment[] = $item;
     }
     Storage::saveEquipment($equipment);
-    $message = 'Gerät wurde gespeichert.';
-    }
+    header('Location: /equipment_list.php?saved=1');
+    exit;
 }
 
-pageHeader('Geräte');
-if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif; ?>
+pageHeader($editItem ? 'Gerät bearbeiten' : 'Neues Gerät');
+?>
 <section class="card">
-    <h2><?= $editItem ? 'Gerät bearbeiten' : 'Gerät erfassen'; ?></h2>
+    <div class="section-actions"><a class="button-link" href="/equipment_list.php">Zur Geräteliste</a></div>
     <form method="post" class="stacked-form">
-        <input type="hidden" name="action" value="save_equipment" />
         <input type="hidden" name="id" value="<?= e($editItem['id'] ?? ''); ?>" />
         <div class="row two-col">
             <label>Gerätename<input type="text" name="name" value="<?= e($editItem['name'] ?? ''); ?>" required /></label>
@@ -128,11 +112,5 @@ if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif;
         </div></fieldset>
         <button type="submit"><?= $editItem ? 'Änderungen speichern' : 'Gerät speichern'; ?></button>
     </form>
-</section>
-<section class="card">
-    <h2>Gerätesammlung</h2>
-    <div class="table-wrap"><table><thead><tr><th>Name</th><th>Kategorie</th><th>Hersteller</th><th>Seriennummer</th><th>Nächste Prüfung</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>
-    <?php foreach ($equipment as $item): ?><tr><td><?= e($item['name'] ?? ''); ?></td><td><?= e($item['category'] ?? ''); ?></td><td><?= e($item['manufacturer'] ?? ''); ?></td><td><?= e($item['serial_number'] ?? ''); ?></td><td><?= e($item['next_inspection_date'] ?? ''); ?></td><td><?= e($item['status'] ?? 'active'); ?></td><td class="actions"><a class="button-link" href="/equipment.php?edit=<?= (int) ($item['id'] ?? 0); ?>">Edit</a><?php if (($item['status'] ?? 'active') !== 'retired'): ?><form method="post" class="action-form"><input type="hidden" name="action" value="archive_equipment" /><input type="hidden" name="id" value="<?= (int) ($item['id'] ?? 0); ?>" /><button type="submit" class="button-muted">Archivieren</button></form><?php endif; ?></td></tr><?php endforeach; ?>
-    </tbody></table></div>
 </section>
 <?php pageFooter();

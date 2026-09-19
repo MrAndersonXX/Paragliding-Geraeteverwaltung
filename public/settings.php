@@ -27,6 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = (new NotificationService($settings['mail']))->testConnection();
         $message = $result['message'];
         $messageClass = $result['success'] ? 'alert' : 'alert alert-error';
+    } elseif (($_POST['action'] ?? '') === 'send_test_email') {
+        $result = (new NotificationService($settings['mail']))->sendTestEmail(trim((string) ($_POST['test_email_to'] ?? '')));
+        $message = $result['message'];
+        $messageClass = $result['success'] ? 'alert' : 'alert alert-error';
     } else {
         $message = 'Einstellungen wurden gespeichert.';
     }
@@ -41,6 +45,7 @@ if ($message !== ''): ?><div class="<?= e($messageClass ?? 'alert'); ?>"><?= e($
     <p class="form-hint">Übliche Einstellungen: Port 587 mit TLS oder Port 465 mit SSL.</p>
     <div class="row three-col"><label>Benutzername<input type="text" name="mail_username" value="<?= e($settings['mail']['username'] ?? ''); ?>" /></label><label>Passwort<input type="password" name="mail_password" value="<?= e($settings['mail']['password'] ?? ''); ?>" /></label><label>Verschlüsselung<select name="mail_encryption"><option value="tls" <?= (($settings['mail']['encryption'] ?? 'tls') === 'tls') ? 'selected' : ''; ?>>TLS</option><option value="ssl" <?= (($settings['mail']['encryption'] ?? '') === 'ssl') ? 'selected' : ''; ?>>SSL</option><option value="">Keine</option></select></label></div>
     <div class="row two-col"><label>Absenderadresse<input type="email" name="mail_from_address" value="<?= e($settings['mail']['from_address'] ?? ''); ?>" /></label><label>Absendername<input type="text" name="mail_from_name" value="<?= e($settings['mail']['from_name'] ?? 'Glider Equipment Tracker'); ?>" /></label></div>
-    <div class="button-row"><button type="submit" name="action" value="save_settings">Einstellungen speichern</button><button type="submit" name="action" value="test_smtp">Speichern und SMTP testen</button></div>
+    <div class="button-row"><button type="submit" name="action" value="save_settings">Einstellungen speichern</button><button type="submit" name="action" value="test_smtp">SMTP-Verbindung testen</button></div>
+    <div class="inline-form"><input type="email" name="test_email_to" placeholder="Empfänger der Test-E-Mail" /><button type="submit" name="action" value="send_test_email">Test-E-Mail senden</button></div>
 </form></section>
 <?php pageFooter();

@@ -53,6 +53,33 @@ function pageHeader(string $title): void
 function pageFooter(): void
 {
     ?>
+    <script>
+    document.querySelectorAll('form[data-edit-form]').forEach(function (form) {
+        let changed = false;
+        form.addEventListener('input', function () { changed = true; });
+        form.addEventListener('change', function () { changed = true; });
+        form.addEventListener('submit', function () { changed = false; });
+        document.querySelectorAll('a[href]').forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                if (!changed || link.target === '_blank' || link.href === window.location.href) {
+                    return;
+                }
+                const leaveAndSave = window.confirm('Änderungen speichern und Seite verlassen?\nAbbrechen bleibt auf dieser Seite.');
+                if (!leaveAndSave) {
+                    event.preventDefault();
+                    return;
+                }
+                event.preventDefault();
+                const returnTo = form.querySelector('input[name="return_to"]');
+                if (returnTo) {
+                    const target = new URL(link.href);
+                    returnTo.value = target.pathname + target.search;
+                }
+                form.submit();
+            });
+        });
+    });
+    </script>
     </main>
     </body>
     </html>

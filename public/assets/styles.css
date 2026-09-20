@@ -76,6 +76,22 @@ body {
     padding: 1.5rem;
 }
 
+.settings-summary {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.35fr) minmax(0, 1fr);
+    margin: 0 0 1.25rem;
+    row-gap: 0.75rem;
+}
+
+.settings-summary dt {
+    color: #5c7891;
+    font-weight: 700;
+}
+
+.settings-summary dd {
+    margin: 0;
+}
+
 .calendar-shell {
     background: #fff;
     border: 1px solid #dce5ee;

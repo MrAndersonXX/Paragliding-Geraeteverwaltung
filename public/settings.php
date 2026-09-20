@@ -10,6 +10,7 @@ use Glider\Auth;
 
 Auth::requireAdmin();
 $settings = Storage::readSettings();
+$editMode = isset($_GET['edit']) || $_SERVER['REQUEST_METHOD'] === 'POST';
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $settings['app'] = [
@@ -26,6 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'from_name' => trim((string) ($_POST['mail_from_name'] ?? 'Glider Equipment Tracker')),
     ];
     Storage::saveSettings($settings);
+    $returnTo = (string) ($_POST['return_to'] ?? '');
+    if ($returnTo !== '' && str_starts_with($returnTo, '/') && !str_starts_with($returnTo, '//') && ($_POST['action'] ?? '') === 'save_settings') {
+        header('Location: ' . $returnTo);
+        exit;
+    }
     if (($_POST['action'] ?? '') === 'test_smtp') {
         $result = (new NotificationService($settings['mail']))->testConnection();
         $message = $result['message'];
@@ -41,7 +47,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 pageHeader('Einstellungen');
 if ($message !== ''): ?><div class="<?= e($messageClass ?? 'alert'); ?>"><?= e($message); ?></div><?php endif; ?>
-<section class="card"><h2>Anwendung</h2><form method="post" class="stacked-form">
+<section class="card"><h2>Anwendung</h2><form method="post" class="stacked-form"<?= $editMode ? ' data-edit-form' : ''; ?>>
+<?php if ($editMode): ?><input type="hidden" name="return_to" value="" /><?php endif; ?>
+<?php if (!$editMode): ?>
+    <dl class="settings-summary"><dt>Anwendungsname</dt><dd><?= e($settings['app']['name'] ?? 'Glider Equipment Tracker'); ?></dd><dt>Zeitzone</dt><dd><?= e($settings['app']['timezone'] ?? 'Europe/Berlin'); ?></dd><dt>SMTP Host</dt><dd><?= e($settings['mail']['host'] ?? 'Nicht konfiguriert'); ?></dd><dt>SMTP Port</dt><dd><?= e($settings['mail']['port'] ?? '587'); ?></dd><dt>SMTP Benutzername</dt><dd><?= e($settings['mail']['username'] ?? 'Nicht konfiguriert'); ?></dd><dt>Verschlüsselung</dt><dd><?= e($settings['mail']['encryption'] ?? 'tls'); ?></dd><dt>Absenderadresse</dt><dd><?= e($settings['mail']['from_address'] ?? 'Nicht konfiguriert'); ?></dd><dt>Absendername</dt><dd><?= e($settings['mail']['from_name'] ?? 'Glider Equipment Tracker'); ?></dd></dl>
+    <a class="button-link" href="/settings.php?edit=1">Bearbeiten</a>
+<?php else: ?>
     <div class="row two-col"><label>Anwendungsname<input type="text" name="app_name" value="<?= e($settings['app']['name'] ?? 'Glider Equipment Tracker'); ?>" required /></label><label>Zeitzone<input type="text" name="timezone" value="<?= e($settings['app']['timezone'] ?? 'Europe/Berlin'); ?>" required /></label></div>
     <h2>SMTP-Mailversand</h2>
     <div class="row two-col"><label>SMTP Host<input type="text" name="mail_host" value="<?= e($settings['mail']['host'] ?? ''); ?>" /></label><label>SMTP Port<input type="number" name="mail_port" value="<?= e($settings['mail']['port'] ?? '587'); ?>" /></label></div>
@@ -50,5 +61,7 @@ if ($message !== ''): ?><div class="<?= e($messageClass ?? 'alert'); ?>"><?= e($
     <div class="row two-col"><label>Absenderadresse<input type="email" name="mail_from_address" value="<?= e($settings['mail']['from_address'] ?? ''); ?>" /></label><label>Absendername<input type="text" name="mail_from_name" value="<?= e($settings['mail']['from_name'] ?? 'Glider Equipment Tracker'); ?>" /></label></div>
     <div class="button-row"><button type="submit" name="action" value="save_settings">Einstellungen speichern</button><button type="submit" name="action" value="test_smtp">SMTP-Verbindung testen</button></div>
     <div class="inline-form"><input type="email" name="test_email_to" placeholder="Empfänger der Test-E-Mail" /><button type="submit" name="action" value="send_test_email">Test-E-Mail senden</button></div>
+    <a class="button-link" href="/settings.php">Abbrechen</a>
+<?php endif; ?>
 </form></section>
 <?php pageFooter();

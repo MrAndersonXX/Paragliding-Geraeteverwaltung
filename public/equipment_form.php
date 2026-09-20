@@ -89,7 +89,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $equipment[] = $item;
         }
         Storage::saveEquipment($equipment);
-        header('Location: /equipment_list.php?saved=1');
+        $returnTo = (string) ($_POST['return_to'] ?? '');
+        if (!str_starts_with($returnTo, '/') || str_starts_with($returnTo, '//')) {
+            $returnTo = '/equipment_list.php?saved=1';
+        }
+        header('Location: ' . $returnTo);
         exit;
     }
 }
@@ -99,8 +103,9 @@ pageHeader($editItem ? 'Gerät bearbeiten' : 'Neues Gerät');
 <?php if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif; ?>
 <section class="card">
     <div class="section-actions"><a class="button-link" href="/equipment_list.php">Zur Geräteliste</a></div>
-    <form method="post" class="stacked-form">
+    <form method="post" class="stacked-form" data-edit-form>
         <input type="hidden" name="id" value="<?= e($editItem['id'] ?? ''); ?>" />
+        <input type="hidden" name="return_to" value="" />
         <div class="row two-col">
             <label>Gerätename<input type="text" name="name" value="<?= e($editItem['name'] ?? ''); ?>" required /></label>
             <label>Gerätetyp<select name="equipment_type" id="equipment-type" required><?php foreach ($equipmentTypes as $type): ?><?php $typeName = (string) ($type['name'] ?? ''); ?><option value="<?= e($typeName); ?>" <?= (($formEquipmentType ?: ($editItem['equipment_type'] ?? $editItem['category'] ?? '')) === $typeName) ? 'selected' : ''; ?>><?= e($typeName); ?></option><?php endforeach; ?></select></label>

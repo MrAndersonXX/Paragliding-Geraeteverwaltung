@@ -200,6 +200,18 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
             <label><span class="field-label">Anschaffungsdatum</span><input type="date" name="purchase_date" value="<?= e($editItem['purchase_date'] ?? ''); ?>" required /></label>
             <label><span class="field-label">Status</span><select name="status"><option value="active" <?= (($editItem['status'] ?? 'active') === 'active') ? 'selected' : ''; ?>>aktiv</option><option value="inspection" <?= (($editItem['status'] ?? '') === 'inspection') ? 'selected' : ''; ?>>in Prüfung</option><option value="retired" <?= (($editItem['status'] ?? '') === 'retired') ? 'selected' : ''; ?>>ausgemustert</option></select></label>
         </div>
+        <?php if ($editItem !== null): ?>
+            <div class="equipment-photo-section">
+                <button type="button" class="equipment-photo-button" data-open-image-picker data-equipment-id="<?= (int) $editItem['id']; ?>" aria-label="Artikelbild ändern">
+                    <?php if (($editItem['image_file'] ?? '') !== ''): ?>
+                        <img class="equipment-photo" src="/equipment_image.php?id=<?= (int) $editItem['id']; ?>" alt="Artikelbild <?= e($editItem['name'] ?? ''); ?>" />
+                    <?php else: ?>
+                        <span class="equipment-photo equipment-photo-placeholder">Kein Bild vorhanden</span>
+                    <?php endif; ?>
+                </button>
+                <span class="info-field" tabindex="0" aria-label="Information zum Artikelbild">i<span class="info-explanation" role="tooltip">Klicke auf das Bild, um ein anderes Artikelbild auszuwählen.</span></span>
+            </div>
+        <?php endif; ?>
         </section>
         <section class="form-section"><h3>Zuordnung &amp; Status</h3>
         <div class="row stacked-fields">
@@ -238,14 +250,14 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
 <?php else: ?>
     <div class="detail-sections">
         <section class="detail-section equipment-photo-section">
-            <button type="button" class="equipment-photo-button" data-open-image-picker data-equipment-id="<?= (int) ($editItem['id'] ?? 0); ?>">
-                <?php if (($editItem['image_file'] ?? '') !== ''): ?>
+            <?php if (($editItem['image_file'] ?? '') !== ''): ?>
+                <button type="button" class="equipment-photo-button" data-open-image-viewer aria-label="Artikelbild vergrößern">
                     <img class="equipment-photo" src="/equipment_image.php?id=<?= (int) ($editItem['id'] ?? 0); ?>" alt="Artikelbild <?= e($editItem['name'] ?? ''); ?>" />
-                <?php else: ?>
-                    <span class="equipment-photo equipment-photo-placeholder">Kein Bild vorhanden</span>
-                <?php endif; ?>
-            </button>
-            <span class="info-field" tabindex="0" aria-label="Information zum Artikelbild">i<span class="info-explanation" role="tooltip">Dieses Bild wurde automatisch anhand von Hersteller und Gerätename aus dem Internet ermittelt. Klicke auf das Bild, um ein passenderes Bild auszuwählen.</span></span>
+                </button>
+                <span class="info-field" tabindex="0" aria-label="Information zum Artikelbild">i<span class="info-explanation" role="tooltip">Klicke auf das Bild, um es vergrößert anzuzeigen.</span></span>
+            <?php else: ?>
+                <span class="equipment-photo equipment-photo-placeholder">Kein Bild vorhanden</span>
+            <?php endif; ?>
         </section>
         <section class="detail-section">
             <h3>Gerät</h3>
@@ -301,6 +313,14 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
         </section>
     </div>
     <div class="button-row"><a class="button-link" href="/equipment_form.php?id=<?= (int) $editItem['id']; ?>&edit=1">Bearbeiten</a><?php if (($editItem['status'] ?? 'active') !== 'retired'): ?><form method="post" class="action-form"><input type="hidden" name="action" value="archive_equipment" /><input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" /><button type="submit" class="button-muted">Archivieren</button></form><?php endif; ?><?php if ($isAdmin): ?><form method="post" class="action-form" data-confirm="Gerät „<?= e($editItem['name'] ?? ''); ?>“ inklusive Prüfungshistorie und Dokumenten endgültig löschen?"><input type="hidden" name="action" value="delete_equipment" /><input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" /><button type="submit" class="button-danger">Löschen</button></form><?php endif; ?></div>
+    <div class="image-viewer-overlay" data-image-viewer hidden>
+        <div class="image-viewer-modal" role="dialog" aria-modal="true" aria-label="Artikelbild vergrößert anzeigen">
+            <button type="button" class="button-muted image-viewer-close" data-close-image-viewer>Schließen</button>
+            <img src="/equipment_image.php?id=<?= (int) ($editItem['id'] ?? 0); ?>" alt="Artikelbild <?= e($editItem['name'] ?? ''); ?>" />
+        </div>
+    </div>
+<?php endif; ?>
+<?php if ($editMode && $editItem !== null): ?>
     <div class="image-picker-overlay" data-image-picker hidden>
         <div class="image-picker-modal" role="dialog" aria-modal="true" aria-label="Artikelbild auswählen">
             <div class="image-picker-header"><h3>Artikelbild auswählen</h3><button type="button" class="button-muted" data-close-image-picker>Schließen</button></div>
@@ -360,10 +380,18 @@ const imagePickerTrigger = document.querySelector('[data-open-image-picker]');
 const imagePickerOverlay = document.querySelector('[data-image-picker]');
 const imagePickerBody = document.querySelector('[data-image-picker-body]');
 const imagePickerCloseButton = document.querySelector('[data-close-image-picker]');
+const imageViewerTrigger = document.querySelector('[data-open-image-viewer]');
+const imageViewerOverlay = document.querySelector('[data-image-viewer]');
+const imageViewerCloseButton = document.querySelector('[data-close-image-viewer]');
 
 const closeImagePicker = function () {
     if (imagePickerOverlay) {
         imagePickerOverlay.hidden = true;
+    }
+};
+const closeImageViewer = function () {
+    if (imageViewerOverlay) {
+        imageViewerOverlay.hidden = true;
     }
 };
 
@@ -450,9 +478,19 @@ imagePickerOverlay?.addEventListener('click', function (event) {
         closeImagePicker();
     }
 });
+imageViewerTrigger?.addEventListener('click', function () {
+    imageViewerOverlay.hidden = false;
+});
+imageViewerCloseButton?.addEventListener('click', closeImageViewer);
+imageViewerOverlay?.addEventListener('click', function (event) {
+    if (event.target === imageViewerOverlay) {
+        closeImageViewer();
+    }
+});
 document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') {
         closeImagePicker();
+        closeImageViewer();
     }
 });
 </script>

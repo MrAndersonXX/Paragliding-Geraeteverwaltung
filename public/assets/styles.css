@@ -1269,6 +1269,40 @@ tbody tr:hover {
     display: none;
 }
 
+.image-viewer-overlay {
+    align-items: center;
+    background: rgba(16, 42, 67, 0.75);
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    padding: 1.25rem;
+    position: fixed;
+    z-index: 20;
+}
+
+.image-viewer-overlay[hidden] {
+    display: none;
+}
+
+.image-viewer-modal {
+    max-height: 90vh;
+    max-width: min(90vw, 70rem);
+    position: relative;
+}
+
+.image-viewer-modal img {
+    display: block;
+    max-height: 90vh;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.image-viewer-close {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+}
+
 .image-picker-modal {
     background: #fff;
     border-radius: 12px;

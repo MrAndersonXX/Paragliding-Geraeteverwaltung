@@ -4,7 +4,6 @@ namespace Glider;
 
 class Auth
 {
-    private const DEFAULT_PASSWORD = 'GliderAdmin2026!';
     private const REMEMBER_COOKIE = 'glider_remember';
     private const REMEMBER_SECONDS = 2419200;
     public const STATUS_PENDING_VERIFICATION = 'pending_verification';
@@ -196,11 +195,6 @@ class Auth
         session_destroy();
     }
 
-    public static function defaultPassword(): string
-    {
-        return self::DEFAULT_PASSWORD;
-    }
-
     public static function activeAdministrators(): array
     {
         return array_values(array_filter(Storage::readUsers(), static fn (array $user): bool =>
@@ -294,10 +288,6 @@ class Auth
         foreach ($users as $index => $user) {
             if (!in_array(($user['role'] ?? ''), ['admin', 'user'], true)) {
                 $users[$index]['role'] = 'admin';
-                $changed = true;
-            }
-            if (empty($user['password_hash'])) {
-                $users[$index]['password_hash'] = password_hash(self::DEFAULT_PASSWORD, PASSWORD_DEFAULT);
                 $changed = true;
             }
             if (!is_array($users[$index]['preferences'] ?? null)) {

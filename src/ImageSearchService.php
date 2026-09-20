@@ -4,13 +4,15 @@ namespace Glider;
 
 class ImageSearchService
 {
-    private const ENDPOINT = 'https://api.openverse.org/v1/images/';
+    private const OPENVERSE_ENDPOINT = 'https://api.openverse.org/v1/images/';
+    private const SERPAPI_ENDPOINT = 'https://serpapi.com/search.json';
     private const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
     private const MAX_BYTES = 8 * 1024 * 1024;
     private const CONTEXT_TERM = 'paraglider';
 
     /**
-     * Uses Openverse (openverse.org), a key-free API for openly licensed images, to find candidate photos.
+     * Finds candidate product photos: SerpApi (real Google Images results) when a key is configured,
+     * falling back to the key-free Openverse API (openly licensed images) otherwise or on quota errors.
      *
      * @return array<int, array{title: string, thumbnail: string, link: string, contextLink: string}>
      */
@@ -22,11 +24,18 @@ class ImageSearchService
 
         $manufacturer = self::sanitizeSearchTerm($manufacturer);
         $name = self::sanitizeSearchTerm($name);
+        $serpApiKey = trim((string) ($imageSearchConfig['serpapi_key'] ?? ''));
 
         // Try the exact model first, then fall back to broader queries so a manufacturer-level
-        // image is still found when no photo of the specific model/size is openly licensed.
+        // image is still found when no matching photo exists for the specific model/size.
         foreach (self::candidateQueries($manufacturer, $name) as $query) {
-            $results = self::fetchResults($query, $limit);
+            if ($serpApiKey !== '') {
+                $results = self::fetchSerpApiResults($query, $serpApiKey, $limit);
+                if ($results !== []) {
+                    return $results;
+                }
+            }
+            $results = self::fetchOpenverseResults($query, $limit);
             if ($results !== []) {
                 return $results;
             }
@@ -58,7 +67,49 @@ class ImageSearchService
     /**
      * @return array<int, array{title: string, thumbnail: string, link: string, contextLink: string}>
      */
-    private static function fetchResults(string $query, int $limit): array
+    private static function fetchSerpApiResults(string $query, string $apiKey, int $limit): array
+    {
+        if ($query === '') {
+            return [];
+        }
+
+        $params = [
+            'engine' => 'google_images',
+            'q' => $query,
+            'api_key' => $apiKey,
+            'safe' => 'active',
+            'ijn' => '0',
+        ];
+
+        $response = self::curlGetJson(self::SERPAPI_ENDPOINT . '?' . http_build_query($params));
+        if ($response === null || !isset($response['images_results']) || !is_array($response['images_results'])) {
+            return [];
+        }
+
+        $results = [];
+        foreach (array_slice($response['images_results'], 0, $limit) as $item) {
+            if (!is_array($item) || !empty($item['unsafe'])) {
+                continue;
+            }
+            $link = (string) ($item['original'] ?? '');
+            if (!self::isHttpsUrl($link)) {
+                continue;
+            }
+            $results[] = [
+                'title' => trim((string) ($item['title'] ?? '')),
+                'thumbnail' => (string) ($item['thumbnail'] ?? $link),
+                'link' => $link,
+                'contextLink' => (string) ($item['link'] ?? ''),
+            ];
+        }
+
+        return $results;
+    }
+
+    /**
+     * @return array<int, array{title: string, thumbnail: string, link: string, contextLink: string}>
+     */
+    private static function fetchOpenverseResults(string $query, int $limit): array
     {
         if ($query === '') {
             return [];
@@ -71,7 +122,7 @@ class ImageSearchService
             'mature' => 'false',
         ];
 
-        $response = self::curlGetJson(self::ENDPOINT . '?' . http_build_query($params));
+        $response = self::curlGetJson(self::OPENVERSE_ENDPOINT . '?' . http_build_query($params));
         if ($response === null || !isset($response['results']) || !is_array($response['results'])) {
             return [];
         }

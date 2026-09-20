@@ -187,6 +187,7 @@ class Storage
             ],
             'image_search' => [
                 'enabled' => false,
+                'serpapi_key' => '',
             ],
         ]);
         return is_array($settings) ? $settings : [];

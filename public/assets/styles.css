@@ -836,6 +836,10 @@ tbody tr:hover {
     flex-direction: column;
 }
 
+.emoji-popup[hidden] {
+    display: none;
+}
+
 .emoji-popup-tabs {
     display: flex;
     overflow-x: auto;

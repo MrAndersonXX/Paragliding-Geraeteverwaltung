@@ -2,6 +2,8 @@
 
 namespace Glider;
 
+require_once __DIR__ . '/AuditLog.php';
+
 class Storage
 {
     private const DATA_DIR = __DIR__ . '/../storage/data';
@@ -47,7 +49,7 @@ class Storage
 
     public static function saveEquipment(array $equipment): void
     {
-        self::writeJson('equipment.json', $equipment);
+        self::saveCollection('equipment.json', $equipment, 'equipment', static fn (array $item): string => trim((string) ($item['name'] ?? '')) ?: 'Unbenanntes Gerät');
     }
 
     public static function readUsers(): array
@@ -57,7 +59,10 @@ class Storage
 
     public static function saveUsers(array $users): void
     {
-        self::writeJson('users.json', $users);
+        self::saveCollection('users.json', $users, 'user', static function (array $item): string {
+            $name = trim((string) (($item['first_name'] ?? '') . ' ' . ($item['last_name'] ?? '')));
+            return $name !== '' ? $name : 'Unbenannter Benutzer';
+        });
     }
 
     public static function readDocumentCategories(): array
@@ -74,7 +79,7 @@ class Storage
 
     public static function saveDocumentCategories(array $categories): void
     {
-        self::writeJson('document_categories.json', $categories);
+        self::saveCollection('document_categories.json', $categories, 'document_category', static fn (array $item): string => trim((string) ($item['name'] ?? '')) ?: 'Unbenannte Kategorie');
     }
 
     public static function readEquipmentDocuments(): array
@@ -84,7 +89,7 @@ class Storage
 
     public static function saveEquipmentDocuments(array $documents): void
     {
-        self::writeJson('equipment_documents.json', $documents);
+        self::saveCollection('equipment_documents.json', $documents, 'document', static fn (array $item): string => trim((string) ($item['original_name'] ?? $item['name'] ?? '')) ?: 'Unbenanntes Dokument');
     }
 
     public static function deleteEquipmentDocuments(int $equipmentId): void
@@ -127,7 +132,7 @@ class Storage
 
     public static function saveEquipmentTypes(array $types): void
     {
-        self::writeJson('equipment_types.json', $types);
+        self::saveCollection('equipment_types.json', $types, 'equipment_type', static fn (array $item): string => trim((string) ($item['name'] ?? '')) ?: 'Unbenannter Gerätetyp');
     }
 
     public static function readSettings(): array
@@ -152,7 +157,65 @@ class Storage
 
     public static function saveSettings(array $settings): void
     {
+        $previousSettings = self::readJson('settings.json', []);
         self::writeJson('settings.json', $settings);
+        AuditLog::record('business', 'settings', 'updated', null, 'Anwendungseinstellungen', $previousSettings, $settings);
+    }
+
+    public static function readAuditLog(): array
+    {
+        return self::readJson('audit_log.json', []);
+    }
+
+    public static function saveAuditLog(array $entries): void
+    {
+        self::writeJson('audit_log.json', $entries);
+    }
+
+    private static function saveCollection(string $filename, array $items, string $domain, callable $label): void
+    {
+        $previousItems = self::readJson($filename, []);
+        self::writeJson($filename, $items);
+
+        $previousById = self::itemsById($previousItems);
+        $itemsById = self::itemsById($items);
+        foreach ($itemsById as $id => $item) {
+            $previous = $previousById[$id] ?? [];
+            $isNew = !array_key_exists($id, $previousById);
+            $eventType = $domain === 'user' && !$isNew && self::isTechnicalUserChange($previous, $item) ? 'technical' : 'business';
+            $eventDomain = $eventType === 'technical' ? 'authentication' : $domain;
+            $entityLabel = $eventType === 'technical' ? 'Anmeldesitzung: ' . $label($item) : $label($item);
+            AuditLog::record($eventType, $eventDomain, $isNew ? 'created' : 'updated', (int) $id, $entityLabel, $previous, $item);
+        }
+
+        foreach ($previousById as $id => $previous) {
+            if (!array_key_exists($id, $itemsById)) {
+                AuditLog::record('business', $domain, 'deleted', (int) $id, $label($previous), $previous, []);
+            }
+        }
+    }
+
+    private static function itemsById(array $items): array
+    {
+        $indexed = [];
+        foreach ($items as $item) {
+            if (!is_array($item) || !isset($item['id'])) {
+                continue;
+            }
+            $indexed[(int) $item['id']] = $item;
+        }
+        return $indexed;
+    }
+
+    private static function isTechnicalUserChange(array $before, array $after): bool
+    {
+        $technicalFields = ['remember_token_hash', 'remember_expires_at'];
+        foreach (array_unique([...array_keys($before), ...array_keys($after)]) as $field) {
+            if (($before[$field] ?? null) !== ($after[$field] ?? null) && !in_array($field, $technicalFields, true)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static function seedDemoData(): void

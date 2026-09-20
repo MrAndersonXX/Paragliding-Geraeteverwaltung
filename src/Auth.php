@@ -130,6 +130,7 @@ class Auth
         foreach (Storage::readUsers() as $user) {
             if (strcasecmp((string) ($user['email'] ?? ''), trim($email)) === 0 && password_verify($password, (string) ($user['password_hash'] ?? ''))) {
                 self::startRememberedSession($user);
+                AuditLog::recordEvent('technical', 'authentication', 'login', (int) $user['id'], self::userLabel($user));
                 return true;
             }
         }
@@ -140,6 +141,7 @@ class Auth
     {
         self::boot();
         $userId = (int) ($_SESSION['user_id'] ?? 0);
+        $user = self::findUser($userId);
         if ($userId > 0) {
             $users = Storage::readUsers();
             foreach ($users as $index => $user) {
@@ -149,6 +151,9 @@ class Auth
                     break;
                 }
             }
+        }
+        if ($user !== null) {
+            AuditLog::recordEvent('technical', 'authentication', 'logout', $userId, self::userLabel($user));
         }
         self::clearRememberCookie();
         $_SESSION = [];
@@ -222,6 +227,7 @@ class Auth
             if (!empty($user['remember_token_hash']) && (int) ($user['remember_expires_at'] ?? 0) >= $now && password_verify($token, $user['remember_token_hash'])) {
                 session_regenerate_id(true);
                 $_SESSION['user_id'] = (int) $user['id'];
+                AuditLog::recordEvent('technical', 'authentication', 'session_restored', (int) $user['id'], self::userLabel($user));
                 return;
             }
         }
@@ -281,5 +287,11 @@ class Auth
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
+    }
+
+    private static function userLabel(array $user): string
+    {
+        $name = trim((string) (($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')));
+        return $name !== '' ? $name : 'Unbekannter Benutzer';
     }
 }

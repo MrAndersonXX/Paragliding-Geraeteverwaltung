@@ -243,6 +243,7 @@ body {
 
 .calendar-event {
     border-radius: 999px;
+    color: inherit;
     display: block;
     font-size: 0.68rem;
     font-weight: 700;
@@ -255,6 +256,11 @@ body {
     text-overflow: ellipsis;
     white-space: nowrap;
     z-index: 1;
+}
+
+.calendar-event:hover {
+    filter: brightness(0.95);
+    text-decoration: none;
 }
 
 .calendar-event.inspection,

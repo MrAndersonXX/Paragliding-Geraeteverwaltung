@@ -33,6 +33,7 @@ foreach ($equipment as $item) {
         if ($date === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || substr($date, 0, 4) !== (string) $year) {
             continue;
         }
+        $event['equipment_id'] = (int) ($item['id'] ?? 0);
         $eventsByDate[$date][] = $event;
     }
 }
@@ -69,7 +70,7 @@ pageHeader('Kalender');
                         <div class="day-cell<?= $date === date('Y-m-d') ? ' today' : ''; ?>">
                             <span class="day-number"><?= $day; ?></span>
                             <?php foreach ($eventsByDate[$date] ?? [] as $event): ?>
-                                <span class="calendar-event <?= e($event['type']); ?>" title="<?= e($event['label']); ?>"><?= e($event['label']); ?></span>
+                                <a class="calendar-event <?= e($event['type']); ?>" href="/equipment_form.php?edit=<?= (int) $event['equipment_id']; ?>" title="<?= e($event['label']); ?>"><?= e($event['label']); ?></a>
                             <?php endforeach; ?>
                         </div>
                     <?php endfor; ?>

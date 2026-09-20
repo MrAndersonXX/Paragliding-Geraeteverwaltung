@@ -5,12 +5,13 @@ require_once __DIR__ . '/../src/InspectionCalculator.php';
 
 use Glider\Storage;
 use Glider\InspectionCalculator;
+use Glider\Auth;
 
 Storage::ensure();
 $equipment = Storage::readEquipment();
 $users = Storage::readUsers();
 $equipmentTypes = Storage::readEquipmentTypes();
-$editId = (int) ($_GET['edit'] ?? 0);
+$editId = (int) ($_GET['edit'] ?? $_POST['id'] ?? 0);
 $editItem = null;
 foreach ($equipment as $existing) {
     if ((int) ($existing['id'] ?? 0) === $editId) {
@@ -20,6 +21,14 @@ foreach ($equipment as $existing) {
 }
 $message = '';
 $formEquipmentType = '';
+$currentUser = Auth::user();
+$isAdmin = Auth::isAdmin();
+$visibleEquipment = $isAdmin ? $equipment : array_values(array_filter($equipment, static fn ($item) => (int) ($item['user_id'] ?? 0) === (int) ($currentUser['id'] ?? 0)));
+$isNew = $editItem === null;
+if (!$isAdmin && $editItem !== null && (int) ($editItem['user_id'] ?? 0) !== (int) ($currentUser['id'] ?? 0)) {
+    http_response_code(403);
+    exit('Zugriff verweigert.');
+}
 $assignedEquipmentId = 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -28,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formEquipmentType = trim((string) ($_POST['equipment_type'] ?? ''));
     $assignedEquipmentId = (int) ($_POST['assigned_equipment_id'] ?? 0);
     $assignedEquipment = null;
-    foreach ($equipment as $existing) {
+    foreach ($visibleEquipment as $existing) {
         if ((int) ($existing['id'] ?? 0) === $assignedEquipmentId) {
             $assignedEquipment = $existing;
             break;
@@ -37,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($formEquipmentType === 'Rettungsgerät' && ($assignedEquipment === null || !in_array(($assignedEquipment['equipment_type'] ?? $assignedEquipment['category'] ?? ''), ['Gurtzeug', 'Frontcontainer'], true))) {
         $message = 'Ein Rettungsgerät muss einem Gerät vom Typ Gurtzeug oder Frontcontainer zugeordnet werden.';
     }
+    $submittedUserId = $isAdmin ? (int) ($_POST['user_id'] ?? 0) : (int) ($currentUser['id'] ?? 0);
     $item = [
         'id' => $id,
         'name' => trim((string) ($_POST['name'] ?? '')),
@@ -46,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'size' => trim((string) ($_POST['size'] ?? '')),
         'serial_number' => trim((string) ($_POST['serial_number'] ?? '')),
         'purchase_date' => trim((string) ($_POST['purchase_date'] ?? '')),
-        'user_id' => (int) ($_POST['user_id'] ?? 0),
+        'user_id' => $submittedUserId,
         'status' => trim((string) ($_POST['status'] ?? 'active')),
         'inspection_interval_days' => (int) ($_POST['inspection_interval_days'] ?? 0),
         'inspection_start_date' => trim((string) ($_POST['inspection_start_date'] ?? '')),
@@ -105,8 +115,8 @@ pageHeader($editItem ? 'Gerät bearbeiten' : 'Neues Gerät');
             <label>Status<select name="status"><option value="active" <?= (($editItem['status'] ?? 'active') === 'active') ? 'selected' : ''; ?>>aktiv</option><option value="inspection" <?= (($editItem['status'] ?? '') === 'inspection') ? 'selected' : ''; ?>>in Prüfung</option><option value="retired" <?= (($editItem['status'] ?? '') === 'retired') ? 'selected' : ''; ?>>ausgemustert</option></select></label>
         </div>
         <div class="row three-col">
-            <label>Zugeordnetes Gerät<select name="assigned_equipment_id" id="assigned-equipment"><option value="0">Nicht zugeordnet</option><?php foreach ($equipment as $otherEquipment): ?><?php $otherId = (int) ($otherEquipment['id'] ?? 0); ?><?php if ($otherId === (int) ($editItem['id'] ?? 0)) { continue; } ?><?php $otherType = (string) ($otherEquipment['equipment_type'] ?? $otherEquipment['category'] ?? ''); ?><option value="<?= $otherId; ?>" data-equipment-type="<?= e($otherType); ?>" <?= ((int) ($editItem['assigned_equipment_id'] ?? 0) === $otherId || $assignedEquipmentId === $otherId) ? 'selected' : ''; ?>><?= e(($otherEquipment['name'] ?? '') . ' (' . $otherType . ')'); ?></option><?php endforeach; ?></select></label>
-            <label>Zugeordneter Benutzer<select name="user_id"><option value="0">Nicht zugeordnet</option><?php foreach ($users as $user): ?><option value="<?= (int) ($user['id'] ?? 0); ?>" <?= ((int) ($editItem['user_id'] ?? 0) === (int) ($user['id'] ?? 0)) ? 'selected' : ''; ?>><?= e(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '') . ' ' . ($user['emoji'] ?? '')); ?></option><?php endforeach; ?></select></label>
+            <label>Zugeordnetes Gerät<select name="assigned_equipment_id" id="assigned-equipment"><option value="0">Nicht zugeordnet</option><?php foreach ($visibleEquipment as $otherEquipment): ?><?php $otherId = (int) ($otherEquipment['id'] ?? 0); ?><?php if ($otherId === (int) ($editItem['id'] ?? 0)) { continue; } ?><?php $otherType = (string) ($otherEquipment['equipment_type'] ?? $otherEquipment['category'] ?? ''); ?><option value="<?= $otherId; ?>" data-equipment-type="<?= e($otherType); ?>" <?= ((int) ($editItem['assigned_equipment_id'] ?? 0) === $otherId || $assignedEquipmentId === $otherId) ? 'selected' : ''; ?>><?= e(($otherEquipment['name'] ?? '') . ' (' . $otherType . ')'); ?></option><?php endforeach; ?></select></label>
+            <?php if ($isAdmin): ?><label>Zugeordneter Benutzer<select name="user_id"><option value="0">Nicht zugeordnet</option><?php foreach ($users as $user): ?><option value="<?= (int) ($user['id'] ?? 0); ?>" <?= ((int) ($editItem['user_id'] ?? 0) === (int) ($user['id'] ?? 0)) ? 'selected' : ''; ?>><?= e(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '') . ' ' . ($user['emoji'] ?? '')); ?></option><?php endforeach; ?></select></label><?php else: ?><input type="hidden" name="user_id" value="<?= (int) ($currentUser['id'] ?? 0); ?>" /><?php endif; ?>
             <label>Prüfungsintervall in Tagen<input type="number" name="inspection_interval_days" min="0" value="<?= e($editItem['inspection_interval_days'] ?? '365'); ?>" /></label>
         </div>
         <div class="row three-col">

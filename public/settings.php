@@ -2,10 +2,13 @@
 
 require __DIR__ . '/_layout.php';
 require_once __DIR__ . '/../src/NotificationService.php';
+require_once __DIR__ . '/../src/Auth.php';
 
 use Glider\Storage;
 use Glider\NotificationService;
+use Glider\Auth;
 
+Auth::requireAdmin();
 $settings = Storage::readSettings();
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

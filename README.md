@@ -42,6 +42,13 @@ Für jedes Gerät können erfasst werden:
 - Maximal zulässige Betriebsdauer für Rettungsgeräte
 - Status (aktiv, in Prüfung, ausgemustert, defekt)
 
+### Benutzer und Rechte
+
+- Die bestehenden Benutzer werden beim ersten Login als Administratoren übernommen.
+- Das initiale Passwort für bestehende Benutzer lautet `GliderAdmin2026!` und sollte anschließend im Benutzerbereich geändert werden.
+- Administratoren haben Zugriff auf alle Bereiche und Geräte.
+- Normale Benutzer sehen und bearbeiten nur ihre eigenen Geräte und können neue Geräte nur sich selbst zuweisen.
+
 ### Prüfungslogik
 
 - Das Prüfungsintervall wird je Gerät individuell definiert.
@@ -99,11 +106,14 @@ Für jedes Gerät können erfasst werden:
 │   └── .gitkeep
 ├── public/
 │   ├── index.php
+│   ├── login.php
+│   ├── logout.php
 │   └── assets/
 │       └── styles.css
 ├── scripts/
 │   └── checks.php
 ├── src/
+│   ├── Auth.php
 │   ├── Config.php
 │   └── NotificationService.php
 ├── redis/

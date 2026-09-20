@@ -1,7 +1,9 @@
 <?php
 
 require_once __DIR__ . '/../src/Storage.php';
+require_once __DIR__ . '/../src/Auth.php';
 
+use Glider\Auth;
 use Glider\Storage;
 
 function e(mixed $value): string
@@ -11,6 +13,7 @@ function e(mixed $value): string
 
 function pageHeader(string $title): void
 {
+    Auth::requireLogin();
     Storage::ensure();
     $settings = Storage::readSettings();
     $appName = $settings['app']['name'] ?? 'Glider Equipment Tracker';
@@ -29,11 +32,14 @@ function pageHeader(string $title): void
         <nav class="sidebar-nav">
             <a href="/">Übersicht</a>
             <a href="/equipment_list.php">Geräte</a>
-            <a href="/equipment_types.php">Gerätetypen</a>
-            <a href="/users.php">Benutzer</a>
-            <a href="/categories.php">Dokumente</a>
-            <a href="/calendar.php">Kalender</a>
-            <a href="/settings.php">Einstellungen</a>
+            <?php if (Auth::isAdmin()): ?>
+                <a href="/equipment_types.php">Gerätetypen</a>
+                <a href="/users.php">Benutzer</a>
+                <a href="/categories.php">Dokumente</a>
+                <a href="/calendar.php">Kalender</a>
+                <a href="/settings.php">Einstellungen</a>
+            <?php endif; ?>
+            <a href="/logout.php">Abmelden</a>
         </nav>
     </aside>
     <main class="container">

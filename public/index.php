@@ -1,14 +1,20 @@
 <?php
 
 require __DIR__ . '/_layout.php';
+require_once __DIR__ . '/../src/Auth.php';
 
 use Glider\Storage;
+use Glider\Auth;
 
 Storage::ensure();
 $settings = Storage::readSettings();
 $appName = $settings['app']['name'] ?? 'Glider Equipment Tracker';
 $timezone = $settings['app']['timezone'] ?? 'Europe/Berlin';
 $equipment = Storage::readEquipment();
+$currentUser = Auth::user();
+if (!Auth::isAdmin()) {
+    $equipment = array_values(array_filter($equipment, static fn ($item) => (int) ($item['user_id'] ?? 0) === (int) ($currentUser['id'] ?? 0)));
+}
 $counts = ['active' => 0, 'inspection' => 0, 'retired' => 0];
 foreach ($equipment as $item) {
     $status = $item['status'] ?? 'active';

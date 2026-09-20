@@ -1,9 +1,16 @@
 <?php
 
 require __DIR__ . '/_layout.php';
+require_once __DIR__ . '/../src/Auth.php';
 use Glider\Storage;
+use Glider\Auth;
 
+Auth::requireLogin();
 $equipment = Storage::readEquipment();
+$currentUser = Auth::user();
+if (!Auth::isAdmin()) {
+    $equipment = array_values(array_filter($equipment, static fn ($item) => (int) ($item['user_id'] ?? 0) === (int) ($currentUser['id'] ?? 0)));
+}
 $year = filter_input(INPUT_GET, 'year', FILTER_VALIDATE_INT) ?: (int) date('Y');
 $year = max(2000, min(2100, $year));
 $months = [

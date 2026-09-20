@@ -2,9 +2,11 @@
 
 require __DIR__ . '/_layout.php';
 require_once __DIR__ . '/../src/InspectionCalculator.php';
+require_once __DIR__ . '/../src/Auth.php';
 
 use Glider\InspectionCalculator;
 use Glider\Storage;
+use Glider\Auth;
 
 Storage::ensure();
 $equipment = Storage::readEquipment();
@@ -23,6 +25,10 @@ foreach ($equipment as $index => $existing) {
 if ($item === null) {
     header('Location: /equipment_list.php');
     exit;
+}
+if (!Auth::isAdmin() && (int) ($item['user_id'] ?? 0) !== (int) (Auth::user()['id'] ?? 0)) {
+    http_response_code(403);
+    exit('Zugriff verweigert.');
 }
 
 $message = '';

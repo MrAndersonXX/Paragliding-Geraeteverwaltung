@@ -1,9 +1,12 @@
 <?php
 
 require __DIR__ . '/_layout.php';
+require_once __DIR__ . '/../src/Auth.php';
 
 use Glider\Storage;
+use Glider\Auth;
 
+Auth::requireAdmin();
 $types = Storage::readEquipmentTypes();
 $equipment = Storage::readEquipment();
 $editId = (int) ($_GET['edit'] ?? 0);

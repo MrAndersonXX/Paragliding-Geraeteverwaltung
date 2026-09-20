@@ -3,10 +3,12 @@
 require __DIR__ . '/_layout.php';
 require_once __DIR__ . '/../src/InspectionCalculator.php';
 require_once __DIR__ . '/../src/EquipmentTimeline.php';
+require_once __DIR__ . '/../src/ImageSearchService.php';
 
 use Glider\Storage;
 use Glider\InspectionCalculator;
 use Glider\EquipmentTimeline;
+use Glider\ImageSearchService;
 use Glider\Auth;
 
 Auth::requireActiveAccount();
@@ -140,6 +142,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $equipment[] = $item;
         }
         Storage::saveEquipment($equipment);
+
+        $settings = Storage::readSettings();
+        if (empty($item['image_file']) && $item['manufacturer'] !== '' && $item['name'] !== '' && !empty($settings['image_search']['enabled'])) {
+            try {
+                $candidates = ImageSearchService::searchImages($item['manufacturer'], $item['name'], $settings['image_search']);
+                if ($candidates !== []) {
+                    $downloaded = ImageSearchService::downloadAndValidate($candidates[0]['link']);
+                    $storedName = Storage::saveEquipmentImageFile($id, $downloaded['tmpPath'], $downloaded['extension']);
+                    foreach ($equipment as $index => $existing) {
+                        if ((int) ($existing['id'] ?? 0) === $id) {
+                            $equipment[$index]['image_file'] = $storedName;
+                            $equipment[$index]['image_source_url'] = $candidates[0]['link'];
+                            $equipment[$index]['image_updated_at'] = date('Y-m-d H:i:s');
+                            break;
+                        }
+                    }
+                    Storage::saveEquipment($equipment);
+                }
+            } catch (\Throwable $exception) {
+                // Auto-fetch failures must never block saving the equipment record.
+                error_log('Image auto-fetch failed: ' . $exception->getMessage());
+            }
+        }
+
         $returnTo = (string) ($_POST['return_to'] ?? '');
         if (!str_starts_with($returnTo, '/') || str_starts_with($returnTo, '//')) {
             $returnTo = '/equipment_form.php?id=' . $id . '&saved=1';
@@ -210,6 +236,16 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
     </form>
 <?php else: ?>
     <div class="detail-sections">
+        <section class="detail-section equipment-photo-section">
+            <button type="button" class="equipment-photo-button" data-open-image-picker data-equipment-id="<?= (int) ($editItem['id'] ?? 0); ?>">
+                <?php if (($editItem['image_file'] ?? '') !== ''): ?>
+                    <img class="equipment-photo" src="/equipment_image.php?id=<?= (int) ($editItem['id'] ?? 0); ?>" alt="Artikelbild <?= e($editItem['name'] ?? ''); ?>" />
+                <?php else: ?>
+                    <span class="equipment-photo equipment-photo-placeholder">Kein Bild vorhanden</span>
+                <?php endif; ?>
+            </button>
+            <span class="info-field" tabindex="0" aria-label="Information zum Artikelbild">i<span class="info-explanation" role="tooltip">Dieses Bild wurde automatisch anhand von Hersteller und Gerätename aus dem Internet ermittelt. Klicke auf das Bild, um ein passenderes Bild auszuwählen.</span></span>
+        </section>
         <section class="detail-section">
             <h3>Gerät</h3>
             <div class="detail-grid">
@@ -264,6 +300,14 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
         </section>
     </div>
     <div class="button-row"><a class="button-link" href="/equipment_form.php?id=<?= (int) $editItem['id']; ?>&edit=1">Bearbeiten</a><?php if (($editItem['status'] ?? 'active') !== 'retired'): ?><form method="post" class="action-form"><input type="hidden" name="action" value="archive_equipment" /><input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" /><button type="submit" class="button-muted">Archivieren</button></form><?php endif; ?><?php if ($isAdmin): ?><form method="post" class="action-form" data-confirm="Gerät „<?= e($editItem['name'] ?? ''); ?>“ inklusive Prüfungshistorie und Dokumenten endgültig löschen?"><input type="hidden" name="action" value="delete_equipment" /><input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" /><button type="submit" class="button-danger">Löschen</button></form><?php endif; ?></div>
+    <div class="image-picker-overlay" data-image-picker hidden>
+        <div class="image-picker-modal" role="dialog" aria-modal="true" aria-label="Artikelbild auswählen">
+            <div class="image-picker-header"><h3>Artikelbild auswählen</h3><button type="button" class="button-muted" data-close-image-picker>Schließen</button></div>
+            <div class="image-picker-body" data-image-picker-body>
+                <p>Bilder werden geladen…</p>
+            </div>
+        </div>
+    </div>
 <?php endif; ?>
 </section>
 <script>
@@ -310,5 +354,105 @@ if (equipmentType && assignedEquipment) {
     updateAssignmentRequirement();
     equipmentType.addEventListener('change', updateAssignmentRequirement);
 }
+
+const imagePickerTrigger = document.querySelector('[data-open-image-picker]');
+const imagePickerOverlay = document.querySelector('[data-image-picker]');
+const imagePickerBody = document.querySelector('[data-image-picker-body]');
+const imagePickerCloseButton = document.querySelector('[data-close-image-picker]');
+
+const closeImagePicker = function () {
+    if (imagePickerOverlay) {
+        imagePickerOverlay.hidden = true;
+    }
+};
+
+const renderImageCandidates = function (equipmentId, candidates) {
+    if (!imagePickerBody) {
+        return;
+    }
+    if (!candidates.length) {
+        imagePickerBody.innerHTML = '<p>Keine passenden Bilder gefunden.</p>';
+        return;
+    }
+    imagePickerBody.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'image-picker-grid';
+    candidates.forEach(function (candidate) {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'image-picker-item';
+        item.title = candidate.title || '';
+        const img = document.createElement('img');
+        img.src = candidate.thumbnail;
+        img.alt = candidate.title || 'Bildvorschlag';
+        item.appendChild(img);
+        item.addEventListener('click', function () {
+            selectImage(equipmentId, candidate.link, item);
+        });
+        grid.appendChild(item);
+    });
+    imagePickerBody.appendChild(grid);
+};
+
+const selectImage = function (equipmentId, imageUrl, triggerElement) {
+    if (imagePickerBody) {
+        imagePickerBody.setAttribute('aria-busy', 'true');
+    }
+    if (triggerElement) {
+        triggerElement.disabled = true;
+    }
+    const body = new URLSearchParams();
+    body.set('id', equipmentId);
+    body.set('image_url', imageUrl);
+    fetch('/equipment_image_select.php', { method: 'POST', body })
+        .then(function (response) { return response.json(); })
+        .then(function (result) {
+            if (result.success) {
+                const photo = document.querySelector('.equipment-photo-button');
+                if (photo) {
+                    photo.innerHTML = `<img class="equipment-photo" src="${result.image_url}" alt="Artikelbild" />`;
+                }
+                closeImagePicker();
+            } else if (imagePickerBody) {
+                imagePickerBody.innerHTML = `<p>${result.message || 'Bild konnte nicht übernommen werden.'}</p>`;
+            }
+        })
+        .catch(function () {
+            if (imagePickerBody) {
+                imagePickerBody.innerHTML = '<p>Bild konnte nicht übernommen werden.</p>';
+            }
+        });
+};
+
+if (imagePickerTrigger && imagePickerOverlay && imagePickerBody) {
+    imagePickerTrigger.addEventListener('click', function () {
+        const equipmentId = imagePickerTrigger.dataset.equipmentId;
+        imagePickerOverlay.hidden = false;
+        imagePickerBody.innerHTML = '<p>Bilder werden geladen…</p>';
+        fetch(`/equipment_image_search.php?id=${equipmentId}`)
+            .then(function (response) { return response.json(); })
+            .then(function (result) {
+                if (result.success) {
+                    renderImageCandidates(equipmentId, result.candidates);
+                } else {
+                    imagePickerBody.innerHTML = `<p>${result.message || 'Bildersuche ist nicht verfügbar.'}</p>`;
+                }
+            })
+            .catch(function () {
+                imagePickerBody.innerHTML = '<p>Bildersuche ist nicht verfügbar.</p>';
+            });
+    });
+}
+imagePickerCloseButton?.addEventListener('click', closeImagePicker);
+imagePickerOverlay?.addEventListener('click', function (event) {
+    if (event.target === imagePickerOverlay) {
+        closeImagePicker();
+    }
+});
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+        closeImagePicker();
+    }
+});
 </script>
 <?php pageFooter();

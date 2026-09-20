@@ -118,6 +118,40 @@ class Storage
         return $directory;
     }
 
+    public static function equipmentImageDirectory(): string
+    {
+        $directory = self::DATA_DIR . '/images';
+        if (!is_dir($directory)) {
+            mkdir($directory, 0775, true);
+        }
+        return $directory;
+    }
+
+    public static function saveEquipmentImageFile(int $equipmentId, string $tmpPath, string $extension): string
+    {
+        $directory = self::equipmentImageDirectory();
+        $extension = preg_replace('/[^a-z0-9]/', '', strtolower($extension)) ?: 'jpg';
+        $storedName = $equipmentId . '-' . bin2hex(random_bytes(16)) . '.' . $extension;
+
+        $equipment = self::readEquipment();
+        foreach ($equipment as $item) {
+            if ((int) ($item['id'] ?? 0) === $equipmentId) {
+                $previousFile = (string) ($item['image_file'] ?? '');
+                if ($previousFile !== '') {
+                    @unlink($directory . '/' . $previousFile);
+                }
+                break;
+            }
+        }
+
+        if (!@rename($tmpPath, $directory . '/' . $storedName)) {
+            copy($tmpPath, $directory . '/' . $storedName);
+            @unlink($tmpPath);
+        }
+
+        return $storedName;
+    }
+
     public static function readEquipmentTypes(): array
     {
         return self::readJson('equipment_types.json', [
@@ -150,6 +184,11 @@ class Storage
                 'encryption' => 'tls',
                 'from_address' => '',
                 'from_name' => 'Glider Equipment Tracker',
+            ],
+            'image_search' => [
+                'enabled' => false,
+                'api_key' => '',
+                'cse_id' => '',
             ],
         ]);
         return is_array($settings) ? $settings : [];

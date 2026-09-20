@@ -1,0 +1,30 @@
+# Synology DS920+ / Container Manager - local-build variant.
+#
+# Use this instead of docker-compose.synology.yml if you cannot or do not want
+# to pull pre-built images from GHCR (e.g. private fork, no internet egress to
+# ghcr.io). This requires the full repository checked out on the NAS, since
+# both images are built from local Dockerfiles.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      TZ: Europe/Berlin
+    volumes:
+      - glider_storage:/var/www/html/storage
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8282:80"
+    depends_on:
+      - app
+
+volumes:
+  glider_storage:

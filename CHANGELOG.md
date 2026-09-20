@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-20
+
+### Added
+- Added a GitHub Actions workflow (`.github/workflows/docker-publish.yml`) that builds and publishes the app and nginx images to the GitHub Container Registry on every push to `main`.
+- `docker-compose.synology.yml` now pulls those pre-built images instead of building locally, so a Synology Container Manager project needs only that single file - no repository checkout, local build, or manual folder setup.
+
+### Changed
+- Renamed the previous local-build Synology compose file to `docker-compose.synology.build.yml`, kept as a fallback for environments without access to ghcr.io.
+
 ## [0.5.0] - 2026-09-20
 
 ### Added

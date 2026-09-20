@@ -1,16 +1,18 @@
 # Synology DS920+ / Container Manager deployment.
 #
-# Unlike docker-compose.yml (used for local development with live-reloading
-# bind mounts), this stack builds two self-contained images that already
-# include the application code. Only the persistent data (JSON records,
-# uploaded documents, equipment images) lives in a named Docker volume that
-# Container Manager creates and manages itself - no manual folder creation
-# or DSM shared-folder ACL changes are required on the NAS.
+# Pulls pre-built images from the GitHub Container Registry (published by
+# .github/workflows/docker-publish.yml) - no repository checkout, build step,
+# or manual folder/permission setup is required on the NAS. Only this single
+# file needs to exist in the Container Manager project folder. Only the
+# persistent data (JSON records, uploaded documents, equipment images) lives
+# in a named Docker volume that Container Manager creates and manages itself.
+#
+# If you cannot pull from ghcr.io (private fork, no internet egress), use
+# docker-compose.synology.build.yml instead, which builds the images locally
+# from the checked-out repository.
 services:
   app:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
+    image: ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-app:latest
     restart: unless-stopped
     working_dir: /var/www/html
     environment:
@@ -19,9 +21,7 @@ services:
       - glider_storage:/var/www/html/storage
 
   nginx:
-    build:
-      context: .
-      dockerfile: docker/nginx/Dockerfile
+    image: ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-nginx:latest
     restart: unless-stopped
     ports:
       - "8282:80"

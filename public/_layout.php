@@ -54,6 +54,13 @@ function pageFooter(): void
 {
     ?>
     <script>
+    document.querySelectorAll('form[data-confirm]').forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!window.confirm(form.dataset.confirm)) {
+                event.preventDefault();
+            }
+        });
+    });
     document.querySelectorAll('form[data-edit-form]').forEach(function (form) {
         let changed = false;
         form.addEventListener('input', function () { changed = true; });

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- Simplified inspection planning to use the purchase date, actual inspection date, and next planned inspection date.
+- The inspection interval can be changed permanently when recording an actual inspection.
+- Removed the separate inspection-start date from the active workflow.
+
 ## [0.3.1] - 2026-09-19
 
 ### Added

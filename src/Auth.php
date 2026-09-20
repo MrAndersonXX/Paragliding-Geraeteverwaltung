@@ -69,6 +69,31 @@ class Auth
         return (self::user()['role'] ?? '') === 'admin';
     }
 
+    public static function preference(string $key, bool $default = false): bool
+    {
+        $user = self::user();
+        if ($user === null) {
+            return $default;
+        }
+        return (bool) ($user['preferences'][$key] ?? $default);
+    }
+
+    public static function setPreference(string $key, bool $value): void
+    {
+        $user = self::user();
+        if ($user === null) {
+            return;
+        }
+        $users = Storage::readUsers();
+        foreach ($users as $index => $storedUser) {
+            if ((int) ($storedUser['id'] ?? 0) === (int) $user['id']) {
+                $users[$index]['preferences'][$key] = $value;
+                Storage::saveUsers($users);
+                return;
+            }
+        }
+    }
+
     public static function login(string $email, string $password): bool
     {
         self::boot();

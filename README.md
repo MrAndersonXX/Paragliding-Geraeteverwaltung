@@ -9,6 +9,10 @@ Ein Docker-basierter Web-Server für die Verwaltung und Überwachung von Gleitsc
 - Dokumente mit frei konfigurierbaren Kategorien
 - Mail-Benachrichtigungen bei bevorstehenden oder überfälligen Prüfungen
 - Jahreskalender mit Prüfungs- und Geräteereignissen
+- Kalendertermine für alle erfassten Gerätedaten und die Prüfungshistorie
+- Gerätealter im Kalender-Mouseover ab dem Folgejahr der Anschaffung
+- Archivierte Geräte mit weiterhin sichtbarer Historie
+- Vertikaler Zeitstrahl in der Geräteansicht
 - Synology DiskStation 920+ kompatibles Docker-Setup
 
 Version: 0.1.0
@@ -36,9 +40,9 @@ Für jedes Gerät können erfasst werden:
 - Seriennummer
 - Anschaffungsdatum
 - Benutzerzuordnung
-- Letzte Prüfung
-- Nächste Prüfung
-- Prüfungsintervall in Tagen oder Monaten
+- Letzte tatsächliche Prüfung
+- Nächste geplante Prüfung
+- Prüfungsintervall in Monaten
 - Maximal zulässige Betriebsdauer für Rettungsgeräte
 - Status (aktiv, in Prüfung, ausgemustert, defekt)
 
@@ -52,8 +56,11 @@ Für jedes Gerät können erfasst werden:
 
 ### Prüfungslogik
 
+- Das Anschaffungsdatum ist für jedes Gerät verpflichtend.
 - Das Prüfungsintervall wird je Gerät individuell definiert.
-- Für jedes Gerät wird ein eigenes Startdatum für die erste Prüfung geführt.
+- Ohne tatsächliche Prüfung wird die nächste geplante Prüfung aus Anschaffungsdatum und Intervall berechnet.
+- Nach einer tatsächlichen Prüfung wird der nächste Termin aus dem tatsächlichen Prüfdatum und dem aktuellen Intervall berechnet.
+- Beim Eintragen einer Prüfung kann das Intervall für alle zukünftigen Prüfungen dauerhaft geändert werden.
 - Sowohl regelmäßige Prüfungen als auch Herstellernachprüfungen können erfasst werden.
 - Wenn für ein Rettungsgerät keine Herstellernachprüfung vorliegt, wird die maximale Betriebsdauer als Ausmusterungs-Horizon berücksichtigt.
 - Geräte können manuell als ausgemustert markiert werden.
@@ -77,7 +84,16 @@ Für jedes Gerät können erfasst werden:
 ### Kalender
 
 - Die Kalenderansicht zeigt zwölf Monatszeilen mit Tagesraster.
-- Prüfungen, Herstellerprüfungen und Ausmusterungen werden direkt aus den Gerätedaten dargestellt.
+- Anschaffung, tatsächliche Prüfungen, nächste geplante Prüfungen, Herstellerprüfungen und Ausmusterungen werden direkt aus den Gerätedaten dargestellt.
+- Gespeicherte Prüfungen werden dauerhaft in der JSON-Prüfungshistorie geführt und im Kalender sowie im Zeitstrahl angezeigt.
+- Bei Terminen ab dem Folgejahr der Anschaffung wird das Gerätealter zum konkreten Termin im Mouseover erklärt.
+- Nach der Archivierung werden spätere aktuelle Termine ausgeblendet; vergangene Termine und die Prüfungshistorie bleiben sichtbar.
+
+### Zeitstrahl
+
+- Die Geräteansicht zeigt alle gültigen Datumsangaben in einem vertikalen Zeitstrahl.
+- Der jüngste Eintrag steht oben, der älteste unten.
+- Die Prüfungshistorie wird in `storage/data/equipment.json` je Gerät gespeichert.
 
 ## Verzeichnisstruktur
 

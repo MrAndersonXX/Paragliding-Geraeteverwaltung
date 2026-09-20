@@ -4,17 +4,25 @@ namespace Glider;
 
 class InspectionCalculator
 {
-    public static function nextDate(string $lastInspectionDate, int $intervalDays): string
+    public static function nextDate(string $baseDate, int $intervalMonths): string
     {
-        if ($lastInspectionDate === '' || $intervalDays <= 0) {
+        if ($intervalMonths <= 0) {
             return '';
         }
 
-        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $lastInspectionDate);
-        if ($date === false || $date->format('Y-m-d') !== $lastInspectionDate) {
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $baseDate);
+        if ($date === false || $date->format('Y-m-d') !== $baseDate) {
             return '';
         }
 
-        return $date->modify('+' . $intervalDays . ' days')->format('Y-m-d');
+        $day = (int) $date->format('d');
+        $targetMonth = $date->modify('first day of this month')->modify('+' . $intervalMonths . ' months');
+        $day = min($day, (int) $targetMonth->format('t'));
+
+        return $targetMonth->setDate(
+            (int) $targetMonth->format('Y'),
+            (int) $targetMonth->format('m'),
+            $day
+        )->format('Y-m-d');
     }
 }

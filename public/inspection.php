@@ -32,9 +32,13 @@ if (!Auth::isAdmin() && (int) ($item['user_id'] ?? 0) !== (int) (Auth::user()['i
 }
 
 $message = '';
+$lastInspectionDate = (string) ($item['last_inspection_date'] ?? '');
+$inspectionIntervalMonths = (int) ($item['inspection_interval_months'] ?? 0);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lastInspectionDate = trim((string) ($_POST['last_inspection_date'] ?? ''));
-    $nextInspectionDate = InspectionCalculator::nextDate($lastInspectionDate, (int) ($item['inspection_interval_days'] ?? 0));
+    $inspectionIntervalMonths = (int) ($_POST['inspection_interval_months'] ?? 0);
+    $purchaseDate = trim((string) ($item['purchase_date'] ?? ''));
+    $nextInspectionDate = InspectionCalculator::nextDate($lastInspectionDate, $inspectionIntervalMonths);
     $uploadedDocuments = $_FILES['documents'] ?? [];
     $documentCategoryIds = $_POST['document_category_ids'] ?? [];
     $documentCategoryIds = is_array($documentCategoryIds) ? $documentCategoryIds : [];
@@ -48,8 +52,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'text/plain',
     ];
     $uploadCount = is_array($uploadedDocuments['name'] ?? null) ? count($uploadedDocuments['name']) : 0;
-    if ($nextInspectionDate === '') {
-        $message = 'Bitte ein gültiges Datum und ein Prüfungsintervall größer als 0 hinterlegen.';
+    if ($purchaseDate === '' || InspectionCalculator::nextDate($purchaseDate, 1) === '') {
+        $message = 'Bitte zuerst ein gültiges Anschaffungsdatum am Gerät hinterlegen.';
+    } elseif ($inspectionIntervalMonths <= 0) {
+        $message = 'Bitte ein Prüfungsintervall größer als 0 Monate angeben.';
+    } elseif ($lastInspectionDate === '' || $lastInspectionDate < $purchaseDate || $nextInspectionDate === '') {
+        $message = 'Bitte ein gültiges tatsächliches Prüfungsdatum ab dem Anschaffungsdatum angeben.';
     } elseif ($uploadCount !== count($documentCategoryIds)) {
         $message = 'Bitte jedem Dokument eine Dokumentenkategorie zuordnen.';
     } else {
@@ -113,7 +121,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($message === '') {
             $equipment[$itemIndex]['last_inspection_date'] = $lastInspectionDate;
+            $equipment[$itemIndex]['inspection_interval_months'] = $inspectionIntervalMonths;
             $equipment[$itemIndex]['next_inspection_date'] = $nextInspectionDate;
+            $inspectionHistory = is_array($equipment[$itemIndex]['inspection_history'] ?? null)
+                ? $equipment[$itemIndex]['inspection_history']
+                : [];
+            $historyExists = false;
+            foreach ($inspectionHistory as $inspection) {
+                if (trim((string) ($inspection['date'] ?? '')) === $lastInspectionDate) {
+                    $historyExists = true;
+                    break;
+                }
+            }
+            if (!$historyExists) {
+                $nextHistoryId = $inspectionHistory === []
+                    ? 0
+                    : max(array_map(static fn ($inspection) => (int) ($inspection['id'] ?? 0), $inspectionHistory));
+                $inspectionHistory[] = [
+                    'id' => $nextHistoryId + 1,
+                    'date' => $lastInspectionDate,
+                    'label' => 'Prüfung',
+                    'recorded_at' => date('c'),
+                ];
+                $equipment[$itemIndex]['inspection_history'] = $inspectionHistory;
+            }
             if ($newDocuments !== []) {
                 $documents = array_merge($documents, $newDocuments);
                 Storage::saveEquipmentDocuments($documents);
@@ -129,11 +160,12 @@ pageHeader('Prüfung eintragen');
 if ($message !== ''): ?><div class="alert alert-error"><?= e($message); ?></div><?php endif; ?>
 <section class="card">
     <h2><?= e($item['name'] ?? 'Gerät'); ?></h2>
-    <p>Das Datum der nächsten Prüfung wird automatisch aus der letzten Prüfung und dem Prüfungsintervall berechnet.</p>
+    <p>Die nächste geplante Prüfung wird aus dem tatsächlichen Prüfungsdatum und dem Prüfungsintervall berechnet.</p>
     <form method="post" class="stacked-form" enctype="multipart/form-data">
         <input type="hidden" name="id" value="<?= (int) $id; ?>" />
-        <label>Letzte Prüfung<input type="date" name="last_inspection_date" value="<?= e($item['last_inspection_date'] ?? ''); ?>" required /></label>
-        <p class="form-hint">Prüfungsintervall: <?= (int) ($item['inspection_interval_days'] ?? 0); ?> Tage</p>
+        <label>Durchgeführte Prüfung<input type="date" name="last_inspection_date" value="<?= e($lastInspectionDate); ?>" required /></label>
+        <label>Prüfungsintervall für zukünftige Prüfungen (Monate)<input type="number" name="inspection_interval_months" min="1" value="<?= $inspectionIntervalMonths; ?>" required /></label>
+        <p class="form-hint">Anschaffungsdatum: <?= e($item['purchase_date'] ?? 'Nicht hinterlegt'); ?></p>
         <fieldset>
             <legend>Dokumente zur Prüfung</legend>
             <div id="document-upload-list">

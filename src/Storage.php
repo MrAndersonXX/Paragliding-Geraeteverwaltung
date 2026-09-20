@@ -87,6 +87,23 @@ class Storage
         self::writeJson('equipment_documents.json', $documents);
     }
 
+    public static function deleteEquipmentDocuments(int $equipmentId): void
+    {
+        $documents = self::readEquipmentDocuments();
+        $remaining = [];
+        foreach ($documents as $document) {
+            if ((int) ($document['equipment_id'] ?? 0) === $equipmentId) {
+                $storedName = (string) ($document['stored_name'] ?? '');
+                if ($storedName !== '') {
+                    @unlink(self::equipmentUploadDirectory() . '/' . $storedName);
+                }
+                continue;
+            }
+            $remaining[] = $document;
+        }
+        self::saveEquipmentDocuments($remaining);
+    }
+
     public static function equipmentUploadDirectory(): string
     {
         $directory = self::DATA_DIR . '/uploads';
@@ -151,8 +168,7 @@ class Storage
                 'serial_number' => 'RSC-2024-001',
                 'purchase_date' => '2023-01-15',
                 'status' => 'active',
-                'inspection_interval_days' => 365,
-                'inspection_start_date' => '2023-01-15',
+                'inspection_interval_months' => 12,
                 'last_inspection_date' => '2025-01-12',
                 'next_inspection_date' => '2026-01-12',
                 'manufacturer_check_date' => '2025-04-17',
@@ -172,8 +188,7 @@ class Storage
                 'serial_number' => 'HAR-8801',
                 'purchase_date' => '2021-04-18',
                 'status' => 'active',
-                'inspection_interval_days' => 730,
-                'inspection_start_date' => '2021-04-18',
+                'inspection_interval_months' => 24,
                 'last_inspection_date' => '2025-02-02',
                 'next_inspection_date' => '2026-02-02',
                 'manufacturer_check_date' => '',

@@ -2,13 +2,16 @@
 
 require __DIR__ . '/_layout.php';
 require_once __DIR__ . '/../src/InspectionCalculator.php';
+require_once __DIR__ . '/../src/EquipmentTimeline.php';
 
 use Glider\Storage;
 use Glider\InspectionCalculator;
+use Glider\EquipmentTimeline;
 use Glider\Auth;
 
 Storage::ensure();
 $equipment = Storage::readEquipment();
+$documents = Storage::readEquipmentDocuments();
 $users = Storage::readUsers();
 $equipmentTypes = Storage::readEquipmentTypes();
 $editId = (int) ($_GET['id'] ?? $_GET['edit'] ?? $_POST['id'] ?? 0);
@@ -26,6 +29,7 @@ $isAdmin = Auth::isAdmin();
 $visibleEquipment = $isAdmin ? $equipment : array_values(array_filter($equipment, static fn ($item) => (int) ($item['user_id'] ?? 0) === (int) ($currentUser['id'] ?? 0)));
 $isNew = $editItem === null;
 $editMode = $isNew || isset($_GET['edit']) || $_SERVER['REQUEST_METHOD'] === 'POST';
+$timelineEntries = $editItem === null ? [] : EquipmentTimeline::entries($editItem, $documents);
 if (!$isAdmin && $editItem !== null && (int) ($editItem['user_id'] ?? 0) !== (int) ($currentUser['id'] ?? 0)) {
     http_response_code(403);
     exit('Zugriff verweigert.');
@@ -62,6 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $message = 'Gerät konnte nicht archiviert werden.';
     }
+    if (($_POST['action'] ?? '') === 'delete_equipment' && $isAdmin) {
+        $equipment = array_values(array_filter($equipment, static fn ($existing) => (int) ($existing['id'] ?? 0) !== $id));
+        Storage::saveEquipment($equipment);
+        Storage::deleteEquipmentDocuments($id);
+        header('Location: /equipment_list.php?saved=1');
+        exit;
+    }
     $id = $id ?: ((count($equipment) > 0 ? max(array_map(fn ($item) => (int) ($item['id'] ?? 0), $equipment)) : 0) + 1);
     $formEquipmentType = trim((string) ($_POST['equipment_type'] ?? ''));
     $assignedEquipmentId = (int) ($_POST['assigned_equipment_id'] ?? 0);
@@ -76,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = 'Ein Rettungsgerät muss einem Gerät vom Typ Gurtzeug oder Frontcontainer zugeordnet werden.';
     }
     $submittedUserId = $isAdmin ? (int) ($_POST['user_id'] ?? 0) : (int) ($currentUser['id'] ?? 0);
-    $item = [
+    $item = array_merge(is_array($editItem) ? $editItem : [], [
         'id' => $id,
         'name' => trim((string) ($_POST['name'] ?? '')),
         'manufacturer' => trim((string) ($_POST['manufacturer'] ?? '')),
@@ -87,10 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'purchase_date' => trim((string) ($_POST['purchase_date'] ?? '')),
         'user_id' => $submittedUserId,
         'status' => trim((string) ($_POST['status'] ?? 'active')),
-        'inspection_interval_days' => (int) ($_POST['inspection_interval_days'] ?? 0),
-        'inspection_start_date' => trim((string) ($_POST['inspection_start_date'] ?? '')),
-        'last_inspection_date' => trim((string) ($_POST['last_inspection_date'] ?? '')),
-        'next_inspection_date' => trim((string) ($_POST['next_inspection_date'] ?? '')),
+        'inspection_interval_months' => (int) ($_POST['inspection_interval_months'] ?? 0),
         'manufacturer_check_date' => trim((string) ($_POST['manufacturer_check_date'] ?? '')),
         'manufacturer_validity_days' => (int) ($_POST['manufacturer_validity_days'] ?? 0),
         'max_operating_days' => (int) ($_POST['max_operating_days'] ?? 0),
@@ -103,9 +111,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'due' => !empty($_POST['notification_due']),
             'retired' => !empty($_POST['notification_retired']),
         ],
-    ];
+    ]);
+    if ($item['purchase_date'] === '' || InspectionCalculator::nextDate($item['purchase_date'], 1) === '') {
+        $message = 'Bitte ein Anschaffungsdatum angeben.';
+    } elseif ($item['inspection_interval_months'] <= 0) {
+        $message = 'Bitte ein Prüfungsintervall größer als 0 Monate angeben.';
+    } elseif ($item['last_inspection_date'] !== '' && (InspectionCalculator::nextDate($item['last_inspection_date'], 1) === '' || $item['last_inspection_date'] < $item['purchase_date'])) {
+        $message = 'Die letzte tatsächliche Prüfung darf nicht vor dem Anschaffungsdatum liegen.';
+    }
     if ($message === '') {
-        $item['next_inspection_date'] = InspectionCalculator::nextDate($item['last_inspection_date'], $item['inspection_interval_days']);
+        $baseDate = $item['last_inspection_date'] !== '' ? $item['last_inspection_date'] : $item['purchase_date'];
+        $item['next_inspection_date'] = InspectionCalculator::nextDate($baseDate, $item['inspection_interval_months']);
+        if ($item['next_inspection_date'] === '') {
+            $message = 'Bitte gültige Datumswerte angeben.';
+        }
+    }
+    if ($message === '') {
         $updated = false;
         foreach ($equipment as $index => $existing) {
             if ((int) ($existing['id'] ?? 0) === $id) {
@@ -135,45 +156,45 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
 <?php if ($editMode): ?><form method="post" class="stacked-form" data-edit-form>
         <input type="hidden" name="id" value="<?= e($editItem['id'] ?? ''); ?>" />
         <input type="hidden" name="return_to" value="" />
+        <input type="hidden" name="last_inspection_date" value="<?= e($editItem['last_inspection_date'] ?? ''); ?>" />
         <div class="form-sections">
         <section class="form-section"><h3>Gerät</h3>
         <div class="row two-col">
-            <label>Gerätename<input type="text" name="name" value="<?= e($editItem['name'] ?? ''); ?>" required /></label>
-            <label>Gerätetyp<select name="equipment_type" id="equipment-type" required><?php foreach ($equipmentTypes as $type): ?><?php $typeName = (string) ($type['name'] ?? ''); ?><option value="<?= e($typeName); ?>" <?= (($formEquipmentType ?: ($editItem['equipment_type'] ?? $editItem['category'] ?? '')) === $typeName) ? 'selected' : ''; ?>><?= e($typeName); ?></option><?php endforeach; ?></select></label>
+            <label><span class="field-label">Gerätename</span><input type="text" name="name" value="<?= e($editItem['name'] ?? ''); ?>" required /></label>
+            <label><span class="field-label">Gerätetyp</span><select name="equipment_type" id="equipment-type" required><?php foreach ($equipmentTypes as $type): ?><?php $typeName = (string) ($type['name'] ?? ''); ?><option value="<?= e($typeName); ?>" <?= (($formEquipmentType ?: ($editItem['equipment_type'] ?? $editItem['category'] ?? '')) === $typeName) ? 'selected' : ''; ?>><?= e($typeName); ?></option><?php endforeach; ?></select></label>
         </div>
         <div class="row three-col">
-            <label>Hersteller<input type="text" name="manufacturer" value="<?= e($editItem['manufacturer'] ?? ''); ?>" /></label>
-            <label>Größe<input type="text" name="size" value="<?= e($editItem['size'] ?? ''); ?>" /></label>
+            <label><span class="field-label">Hersteller</span><input type="text" name="manufacturer" value="<?= e($editItem['manufacturer'] ?? ''); ?>" /></label>
+            <label><span class="field-label">Größe</span><input type="text" name="size" value="<?= e($editItem['size'] ?? ''); ?>" /></label>
         </div>
         <div class="row three-col">
-            <label>Seriennummer<input type="text" name="serial_number" value="<?= e($editItem['serial_number'] ?? ''); ?>" /></label>
-            <label>Anschaffungsdatum<input type="date" name="purchase_date" value="<?= e($editItem['purchase_date'] ?? ''); ?>" /></label>
-            <label>Status<select name="status"><option value="active" <?= (($editItem['status'] ?? 'active') === 'active') ? 'selected' : ''; ?>>aktiv</option><option value="inspection" <?= (($editItem['status'] ?? '') === 'inspection') ? 'selected' : ''; ?>>in Prüfung</option><option value="retired" <?= (($editItem['status'] ?? '') === 'retired') ? 'selected' : ''; ?>>ausgemustert</option></select></label>
+            <label><span class="field-label">Seriennummer</span><input type="text" name="serial_number" value="<?= e($editItem['serial_number'] ?? ''); ?>" /></label>
+            <label><span class="field-label">Anschaffungsdatum</span><input type="date" name="purchase_date" value="<?= e($editItem['purchase_date'] ?? ''); ?>" required /></label>
+            <label><span class="field-label">Status</span><select name="status"><option value="active" <?= (($editItem['status'] ?? 'active') === 'active') ? 'selected' : ''; ?>>aktiv</option><option value="inspection" <?= (($editItem['status'] ?? '') === 'inspection') ? 'selected' : ''; ?>>in Prüfung</option><option value="retired" <?= (($editItem['status'] ?? '') === 'retired') ? 'selected' : ''; ?>>ausgemustert</option></select></label>
         </div>
         </section>
         <section class="form-section"><h3>Zuordnung &amp; Status</h3>
-        <div class="row three-col">
-            <label>Zugeordnetes Gerät<select name="assigned_equipment_id" id="assigned-equipment"><option value="0">Nicht zugeordnet</option><?php foreach ($visibleEquipment as $otherEquipment): ?><?php $otherId = (int) ($otherEquipment['id'] ?? 0); ?><?php if ($otherId === (int) ($editItem['id'] ?? 0)) { continue; } ?><?php $otherType = (string) ($otherEquipment['equipment_type'] ?? $otherEquipment['category'] ?? ''); ?><option value="<?= $otherId; ?>" data-equipment-type="<?= e($otherType); ?>" <?= ((int) ($editItem['assigned_equipment_id'] ?? 0) === $otherId || $assignedEquipmentId === $otherId) ? 'selected' : ''; ?>><?= e(($otherEquipment['name'] ?? '') . ' (' . $otherType . ')'); ?></option><?php endforeach; ?></select></label>
-            <?php if ($isAdmin): ?><label>Zugeordneter Benutzer<select name="user_id"><option value="0">Nicht zugeordnet</option><?php foreach ($users as $user): ?><option value="<?= (int) ($user['id'] ?? 0); ?>" <?= ((int) ($editItem['user_id'] ?? 0) === (int) ($user['id'] ?? 0)) ? 'selected' : ''; ?>><?= e(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '') . ' ' . ($user['emoji'] ?? '')); ?></option><?php endforeach; ?></select></label><?php else: ?><input type="hidden" name="user_id" value="<?= (int) ($currentUser['id'] ?? 0); ?>" /><?php endif; ?>
-            <label>Prüfungsintervall in Tagen<input type="number" name="inspection_interval_days" min="0" value="<?= e($editItem['inspection_interval_days'] ?? '365'); ?>" /></label>
+        <div class="row stacked-fields">
+            <label><span class="field-label">Zugeordnetes Gerät</span><select name="assigned_equipment_id" id="assigned-equipment"><option value="0">Nicht zugeordnet</option><?php foreach ($visibleEquipment as $otherEquipment): ?><?php $otherId = (int) ($otherEquipment['id'] ?? 0); ?><?php if ($otherId === (int) ($editItem['id'] ?? 0)) { continue; } ?><?php $otherType = (string) ($otherEquipment['equipment_type'] ?? $otherEquipment['category'] ?? ''); ?><option value="<?= $otherId; ?>" data-equipment-type="<?= e($otherType); ?>" <?= ((int) ($editItem['assigned_equipment_id'] ?? 0) === $otherId || $assignedEquipmentId === $otherId) ? 'selected' : ''; ?>><?= e(($otherEquipment['name'] ?? '') . ' (' . $otherType . ')'); ?></option><?php endforeach; ?></select></label>
+            <?php if ($isAdmin): ?><label><span class="field-label">Zugeordneter Benutzer</span><select name="user_id"><option value="0">Nicht zugeordnet</option><?php foreach ($users as $user): ?><option value="<?= (int) ($user['id'] ?? 0); ?>" <?= ((int) ($editItem['user_id'] ?? 0) === (int) ($user['id'] ?? 0)) ? 'selected' : ''; ?>><?= e(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '') . ' ' . ($user['emoji'] ?? '')); ?></option><?php endforeach; ?></select></label><?php else: ?><input type="hidden" name="user_id" value="<?= (int) ($currentUser['id'] ?? 0); ?>" /><?php endif; ?>
+            <label><span class="field-label">Prüfungsintervall in Monaten</span><input type="number" name="inspection_interval_months" min="1" value="<?= e($editItem['inspection_interval_months'] ?? '12'); ?>" required /></label>
         </div>
         </section>
-        <section class="form-section"><h3>Prüfungen</h3>
+        <section class="form-section"><h3>Prüfungsplanung</h3>
         <div class="row three-col">
-            <label>Beginn Prüfungsdatum<input type="date" name="inspection_start_date" value="<?= e($editItem['inspection_start_date'] ?? ''); ?>" /></label>
-            <label>Letzte Prüfung<input type="date" name="last_inspection_date" value="<?= e($editItem['last_inspection_date'] ?? ''); ?>" /></label>
-            <label>Nächste Prüfung <span class="info-field" tabindex="0" aria-label="Information zur Berechnung">i<span class="info-explanation" role="tooltip">Wird automatisch aus der letzten Prüfung und dem Prüfungsintervall berechnet.</span></span><input type="date" name="next_inspection_date" value="<?= e($editItem['next_inspection_date'] ?? ''); ?>" readonly /></label>
+            <div class="field-readonly"><span class="field-label">Letzte tatsächliche Prüfung</span><span><?= e($editItem['last_inspection_date'] ?? 'Noch keine Prüfung erfasst'); ?></span></div>
+            <label><span class="field-label">Nächste geplante Prüfung <span class="info-field" tabindex="0" aria-label="Information zur Berechnung">i<span class="info-explanation" role="tooltip">Wird aus der letzten tatsächlichen Prüfung und dem Prüfungsintervall berechnet. Ohne Prüfung wird das Anschaffungsdatum verwendet.</span></span></span><input type="date" name="next_inspection_date" value="<?= e($editItem['next_inspection_date'] ?? ''); ?>" readonly /></label>
         </div>
         </section>
         <section class="form-section"><h3>Hersteller &amp; Notizen</h3>
         <div class="row three-col">
-            <label>Hersteller-Nachprüfung<input type="date" name="manufacturer_check_date" value="<?= e($editItem['manufacturer_check_date'] ?? ''); ?>" /></label>
-            <label>Gültigkeit in Tagen<input type="number" name="manufacturer_validity_days" min="0" value="<?= e($editItem['manufacturer_validity_days'] ?? '0'); ?>" /></label>
-            <label>Max. Betriebsdauer in Tagen<input type="number" name="max_operating_days" min="0" value="<?= e($editItem['max_operating_days'] ?? '0'); ?>" /></label>
+            <label><span class="field-label">Hersteller-Nachprüfung</span><input type="date" name="manufacturer_check_date" value="<?= e($editItem['manufacturer_check_date'] ?? ''); ?>" /></label>
+            <label><span class="field-label">Gültigkeit in Tagen</span><input type="number" name="manufacturer_validity_days" min="0" value="<?= e($editItem['manufacturer_validity_days'] ?? '0'); ?>" /></label>
+            <label><span class="field-label">Max. Betriebsdauer in Tagen</span><input type="number" name="max_operating_days" min="0" value="<?= e($editItem['max_operating_days'] ?? '0'); ?>" /></label>
         </div>
         <div class="row two-col">
-            <label>Ausmusterungsdatum<input type="date" name="retired_at" value="<?= e($editItem['retired_at'] ?? ''); ?>" /></label>
-            <label>Notiz<textarea name="notes" rows="3"><?= e($editItem['notes'] ?? ''); ?></textarea></label>
+            <label><span class="field-label">Ausmusterungsdatum</span><input type="date" name="retired_at" value="<?= e($editItem['retired_at'] ?? ''); ?>" /></label>
+            <label><span class="field-label">Notiz</span><textarea name="notes" rows="3"><?= e($editItem['notes'] ?? ''); ?></textarea></label>
         </div>
         </section>
         </div>
@@ -188,17 +209,97 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
     </form>
 <?php else: ?>
     <div class="detail-sections">
-        <section class="detail-section"><h3>Gerät</h3><dl class="equipment-summary"><dt>Gerätename</dt><dd><?= e($editItem['name'] ?? ''); ?></dd><dt>Gerätetyp</dt><dd><?= e($editItem['equipment_type'] ?? $editItem['category'] ?? ''); ?></dd><dt>Hersteller</dt><dd><?= e($editItem['manufacturer'] ?? ''); ?></dd><dt>Größe</dt><dd><?= e($editItem['size'] ?? ''); ?></dd><dt>Seriennummer</dt><dd><?= e($editItem['serial_number'] ?? ''); ?></dd><dt>Anschaffungsdatum</dt><dd><?= e($editItem['purchase_date'] ?? ''); ?></dd></dl></section>
-        <section class="detail-section"><h3>Zuordnung &amp; Status</h3><dl class="equipment-summary"><dt>Zugeordnetes Gerät</dt><dd><?= e($assignedEquipmentName); ?></dd><dt>Benutzer</dt><dd><?= e($assignedUserName); ?></dd><dt>Status</dt><dd><?= e($editItem['status'] ?? 'active'); ?></dd><dt>Ausmusterungsdatum</dt><dd><?= e($editItem['retired_at'] ?? ''); ?></dd></dl></section>
-        <section class="detail-section"><h3>Prüfungen</h3><dl class="equipment-summary"><dt>Prüfungsintervall</dt><dd><?= (int) ($editItem['inspection_interval_days'] ?? 0); ?> Tage</dd><dt>Beginn Prüfungsdatum</dt><dd><?= e($editItem['inspection_start_date'] ?? ''); ?></dd><dt>Letzte Prüfung</dt><dd><?= e($editItem['last_inspection_date'] ?? ''); ?></dd><dt>Nächste Prüfung</dt><dd><?= e($editItem['next_inspection_date'] ?? ''); ?></dd></dl></section>
-        <section class="detail-section"><h3>Hersteller &amp; Notizen</h3><dl class="equipment-summary"><dt>Hersteller-Nachprüfung</dt><dd><?= e($editItem['manufacturer_check_date'] ?? ''); ?></dd><dt>Gültigkeit</dt><dd><?= (int) ($editItem['manufacturer_validity_days'] ?? 0); ?> Tage</dd><dt>Max. Betriebsdauer</dt><dd><?= (int) ($editItem['max_operating_days'] ?? 0); ?> Tage</dd><dt>Notiz</dt><dd><?= e($editItem['notes'] ?? ''); ?></dd></dl></section>
+        <section class="detail-section">
+            <h3>Gerät</h3>
+            <div class="detail-grid">
+                <div class="detail-row"><span class="detail-label">Gerätename</span><span class="detail-value"><?= e($editItem['name'] ?? ''); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Gerätetyp</span><span class="detail-value"><?= e($editItem['equipment_type'] ?? $editItem['category'] ?? ''); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Hersteller</span><span class="detail-value"><?= e($editItem['manufacturer'] ?? ''); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Größe</span><span class="detail-value"><?= e($editItem['size'] ?? ''); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Seriennummer</span><span class="detail-value"><?= e($editItem['serial_number'] ?? ''); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Anschaffungsdatum</span><span class="detail-value"><?= e($editItem['purchase_date'] ?? ''); ?></span></div>
+            </div>
+        </section>
+        <section class="detail-section">
+            <h3>Zuordnung &amp; Status</h3>
+            <div class="detail-grid">
+                <div class="detail-row"><span class="detail-label">Zugeordnetes Gerät</span><span class="detail-value"><?= e($assignedEquipmentName); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Benutzer</span><span class="detail-value"><?= e($assignedUserName); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><?= e($editItem['status'] ?? 'active'); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Ausmusterungsdatum</span><span class="detail-value"><?= e($editItem['retired_at'] ?? ''); ?></span></div>
+            </div>
+        </section>
+        <section class="detail-section">
+            <h3>Prüfungen</h3>
+            <div class="detail-grid">
+                <div class="detail-row"><span class="detail-label">Prüfungsintervall</span><span class="detail-value"><?= (int) ($editItem['inspection_interval_months'] ?? 0); ?> Monate</span></div>
+                <div class="detail-row"><span class="detail-label">Letzte tatsächliche Prüfung</span><span class="detail-value"><?= e($editItem['last_inspection_date'] ?? ''); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Nächste geplante Prüfung</span><span class="detail-value"><?= e($editItem['next_inspection_date'] ?? ''); ?></span></div>
+            </div>
+        </section>
+        <section class="detail-section">
+            <h3>Hersteller &amp; Notizen</h3>
+            <div class="detail-grid">
+                <div class="detail-row"><span class="detail-label">Hersteller-Nachprüfung</span><span class="detail-value"><?= e($editItem['manufacturer_check_date'] ?? ''); ?></span></div>
+                <div class="detail-row"><span class="detail-label">Gültigkeit</span><span class="detail-value"><?= (int) ($editItem['manufacturer_validity_days'] ?? 0); ?> Tage</span></div>
+                <div class="detail-row"><span class="detail-label">Max. Betriebsdauer</span><span class="detail-value"><?= (int) ($editItem['max_operating_days'] ?? 0); ?> Tage</span></div>
+                <div class="detail-row detail-row-wide"><span class="detail-label">Notiz</span><span class="detail-value"><?= e($editItem['notes'] ?? ''); ?></span></div>
+            </div>
+        </section>
+        <section class="detail-section timeline-section">
+            <h3>Zeitstrahl</h3>
+            <?php if ($timelineEntries === []): ?>
+                <p class="timeline-empty">Noch keine Datumsangaben erfasst.</p>
+            <?php else: ?>
+                <ol class="equipment-timeline">
+                    <?php foreach ($timelineEntries as $timelineEntry): ?>
+                        <li class="timeline-entry <?= e($timelineEntry['type']); ?>">
+                            <time datetime="<?= e($timelineEntry['date']); ?>"><?= e(date('d.m.Y', strtotime($timelineEntry['date']))); ?></time>
+                            <span><?= e($timelineEntry['label']); ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ol>
+            <?php endif; ?>
+        </section>
     </div>
-    <div class="button-row"><a class="button-link" href="/equipment_form.php?id=<?= (int) $editItem['id']; ?>&edit=1">Bearbeiten</a><?php if (($editItem['status'] ?? 'active') !== 'retired'): ?><form method="post" class="action-form"><input type="hidden" name="action" value="archive_equipment" /><input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" /><button type="submit" class="button-muted">Archivieren</button></form><?php endif; ?></div>
+    <div class="button-row"><a class="button-link" href="/equipment_form.php?id=<?= (int) $editItem['id']; ?>&edit=1">Bearbeiten</a><?php if (($editItem['status'] ?? 'active') !== 'retired'): ?><form method="post" class="action-form"><input type="hidden" name="action" value="archive_equipment" /><input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" /><button type="submit" class="button-muted">Archivieren</button></form><?php endif; ?><?php if ($isAdmin): ?><form method="post" class="action-form" data-confirm="Gerät „<?= e($editItem['name'] ?? ''); ?>“ inklusive Prüfungshistorie und Dokumenten endgültig löschen?"><input type="hidden" name="action" value="delete_equipment" /><input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" /><button type="submit" class="button-danger">Löschen</button></form><?php endif; ?></div>
 <?php endif; ?>
 </section>
 <script>
 const equipmentType = document.getElementById('equipment-type');
 const assignedEquipment = document.getElementById('assigned-equipment');
+const inspectionForm = document.querySelector('[data-edit-form]');
+const nextInspectionDate = inspectionForm?.querySelector('[name="next_inspection_date"]');
+const inspectionDateFields = inspectionForm ? [
+    inspectionForm.querySelector('[name="last_inspection_date"]'),
+    inspectionForm.querySelector('[name="purchase_date"]'),
+    inspectionForm.querySelector('[name="inspection_interval_months"]'),
+] : [];
+const updateNextInspectionDate = function () {
+    if (!nextInspectionDate) {
+        return;
+    }
+    const [lastInspection, purchaseDate, interval] = inspectionDateFields.map(function (field) {
+        return field?.value || '';
+    });
+    const baseDate = lastInspection || purchaseDate;
+    if (!baseDate || !interval || Number(interval) <= 0) {
+        nextInspectionDate.value = '';
+        return;
+    }
+    const date = new Date(baseDate + 'T00:00:00');
+    const targetMonth = new Date(date.getFullYear(), date.getMonth() + Number(interval), 1);
+    const lastDayOfTargetMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0).getDate();
+    const year = targetMonth.getFullYear();
+    const month = String(targetMonth.getMonth() + 1).padStart(2, '0');
+    const day = String(Math.min(date.getDate(), lastDayOfTargetMonth)).padStart(2, '0');
+    nextInspectionDate.value = `${year}-${month}-${day}`;
+};
+inspectionDateFields.forEach(function (field) {
+    field?.addEventListener('input', updateNextInspectionDate);
+    field?.addEventListener('change', updateNextInspectionDate);
+});
+updateNextInspectionDate();
 if (equipmentType && assignedEquipment) {
     const updateAssignmentRequirement = function () {
         const rescueSelected = equipmentType.value === 'Rettungsgerät';

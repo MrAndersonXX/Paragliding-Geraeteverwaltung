@@ -58,21 +58,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update_profile') {
         }
 
         $emailChanged = strcasecmp($email, (string) ($user['email'] ?? '')) !== 0;
+        $codeSendFailed = false;
         if ($emailChanged) {
             $now = time();
             $lastRequestedAt = (int) ($user['pending_email_requested_at'] ?? 0);
             if ($lastRequestedAt > 0 && $now - $lastRequestedAt < EMAIL_CODE_RESEND_COOLDOWN_SECONDS) {
                 $message = 'Bitte kurz warten, bevor ein weiterer Bestätigungscode angefordert wird.';
                 $messageClass = 'alert alert-error';
+                $codeSendFailed = true;
             } else {
                 $code = (string) random_int(100000, 999999);
                 $mailSettings = Storage::readSettings();
-                $sent = (new NotificationService($mailSettings['mail'] ?? []))->send(
-                    $email,
-                    'Bestätigungscode für E-Mail-Änderung',
-                    "Hallo,\n\nfür die Änderung deiner E-Mail-Adresse im Glider Equipment Tracker lautet dein Bestätigungscode:\n\n{$code}\n\nDer Code ist 15 Minuten gültig. Falls du diese Änderung nicht angefordert hast, ignoriere diese Nachricht."
-                );
-                if ($sent) {
+                $result = (new NotificationService($mailSettings['mail'] ?? []))->sendVerificationCode($email, $code);
+                if ($result['success']) {
                     $fields['pending_email'] = $email;
                     $fields['pending_email_code_hash'] = password_hash($code, PASSWORD_DEFAULT);
                     $fields['pending_email_expires_at'] = $now + EMAIL_CODE_TTL_SECONDS;
@@ -80,15 +78,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update_profile') {
                     $fields['pending_email_requested_at'] = $now;
                     $message = 'Ein Bestätigungscode wurde an die neue Adresse gesendet. Bitte unten eingeben, um die Änderung abzuschließen.';
                 } else {
-                    $message = 'Der Bestätigungscode konnte nicht versendet werden. Die E-Mail-Adresse wurde nicht geändert.';
+                    $message = 'Der Bestätigungscode konnte nicht versendet werden (' . $result['message'] . '). Die E-Mail-Adresse wurde nicht geändert.';
                     $messageClass = 'alert alert-error';
+                    $codeSendFailed = true;
                 }
             }
         }
 
         Auth::updateCurrentUser($fields);
-        header('Location: /profile.php?saved=1');
-        exit;
+        // Redirect only on full success, otherwise keep rendering so the error/pending-code message survives.
+        if (!$codeSendFailed) {
+            $redirectMessage = $emailChanged ? 'code_sent=1' : 'saved=1';
+            header('Location: /profile.php?' . $redirectMessage);
+            exit;
+        }
+        $user = Auth::user();
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'confirm_email_code') {
     $code = trim((string) ($_POST['code'] ?? ''));
@@ -127,6 +131,7 @@ $user = Auth::user();
 
 pageHeader('Mein Profil');
 if (isset($_GET['saved'])): ?><div class="alert">Profil wurde gespeichert.</div><?php endif; ?>
+<?php if (isset($_GET['code_sent'])): ?><div class="alert">Profil wurde gespeichert. Ein Bestätigungscode wurde an die neue E-Mail-Adresse gesendet.</div><?php endif; ?>
 <?php if (isset($_GET['confirmed'])): ?><div class="alert">E-Mail-Adresse wurde bestätigt und geändert.</div><?php endif; ?>
 <?php if (isset($_GET['cancelled'])): ?><div class="alert">Die E-Mail-Änderung wurde abgebrochen.</div><?php endif; ?>
 <?php if (isset($_GET['expired'])): ?><div class="alert alert-error">Der Bestätigungscode ist abgelaufen. Bitte E-Mail-Änderung erneut anfordern.</div><?php endif; ?>

@@ -135,6 +135,8 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
 <?php if ($editMode): ?><form method="post" class="stacked-form" data-edit-form>
         <input type="hidden" name="id" value="<?= e($editItem['id'] ?? ''); ?>" />
         <input type="hidden" name="return_to" value="" />
+        <div class="form-sections">
+        <section class="form-section"><h3>Gerät</h3>
         <div class="row two-col">
             <label>Gerätename<input type="text" name="name" value="<?= e($editItem['name'] ?? ''); ?>" required /></label>
             <label>Gerätetyp<select name="equipment_type" id="equipment-type" required><?php foreach ($equipmentTypes as $type): ?><?php $typeName = (string) ($type['name'] ?? ''); ?><option value="<?= e($typeName); ?>" <?= (($formEquipmentType ?: ($editItem['equipment_type'] ?? $editItem['category'] ?? '')) === $typeName) ? 'selected' : ''; ?>><?= e($typeName); ?></option><?php endforeach; ?></select></label>
@@ -148,16 +150,22 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
             <label>Anschaffungsdatum<input type="date" name="purchase_date" value="<?= e($editItem['purchase_date'] ?? ''); ?>" /></label>
             <label>Status<select name="status"><option value="active" <?= (($editItem['status'] ?? 'active') === 'active') ? 'selected' : ''; ?>>aktiv</option><option value="inspection" <?= (($editItem['status'] ?? '') === 'inspection') ? 'selected' : ''; ?>>in Prüfung</option><option value="retired" <?= (($editItem['status'] ?? '') === 'retired') ? 'selected' : ''; ?>>ausgemustert</option></select></label>
         </div>
+        </section>
+        <section class="form-section"><h3>Zuordnung &amp; Status</h3>
         <div class="row three-col">
             <label>Zugeordnetes Gerät<select name="assigned_equipment_id" id="assigned-equipment"><option value="0">Nicht zugeordnet</option><?php foreach ($visibleEquipment as $otherEquipment): ?><?php $otherId = (int) ($otherEquipment['id'] ?? 0); ?><?php if ($otherId === (int) ($editItem['id'] ?? 0)) { continue; } ?><?php $otherType = (string) ($otherEquipment['equipment_type'] ?? $otherEquipment['category'] ?? ''); ?><option value="<?= $otherId; ?>" data-equipment-type="<?= e($otherType); ?>" <?= ((int) ($editItem['assigned_equipment_id'] ?? 0) === $otherId || $assignedEquipmentId === $otherId) ? 'selected' : ''; ?>><?= e(($otherEquipment['name'] ?? '') . ' (' . $otherType . ')'); ?></option><?php endforeach; ?></select></label>
             <?php if ($isAdmin): ?><label>Zugeordneter Benutzer<select name="user_id"><option value="0">Nicht zugeordnet</option><?php foreach ($users as $user): ?><option value="<?= (int) ($user['id'] ?? 0); ?>" <?= ((int) ($editItem['user_id'] ?? 0) === (int) ($user['id'] ?? 0)) ? 'selected' : ''; ?>><?= e(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '') . ' ' . ($user['emoji'] ?? '')); ?></option><?php endforeach; ?></select></label><?php else: ?><input type="hidden" name="user_id" value="<?= (int) ($currentUser['id'] ?? 0); ?>" /><?php endif; ?>
             <label>Prüfungsintervall in Tagen<input type="number" name="inspection_interval_days" min="0" value="<?= e($editItem['inspection_interval_days'] ?? '365'); ?>" /></label>
         </div>
+        </section>
+        <section class="form-section"><h3>Prüfungen</h3>
         <div class="row three-col">
             <label>Beginn Prüfungsdatum<input type="date" name="inspection_start_date" value="<?= e($editItem['inspection_start_date'] ?? ''); ?>" /></label>
             <label>Letzte Prüfung<input type="date" name="last_inspection_date" value="<?= e($editItem['last_inspection_date'] ?? ''); ?>" /></label>
             <label>Nächste Prüfung <span class="info-field" tabindex="0" aria-label="Information zur Berechnung">i<span class="info-explanation" role="tooltip">Wird automatisch aus der letzten Prüfung und dem Prüfungsintervall berechnet.</span></span><input type="date" name="next_inspection_date" value="<?= e($editItem['next_inspection_date'] ?? ''); ?>" readonly /></label>
         </div>
+        </section>
+        <section class="form-section"><h3>Hersteller &amp; Notizen</h3>
         <div class="row three-col">
             <label>Hersteller-Nachprüfung<input type="date" name="manufacturer_check_date" value="<?= e($editItem['manufacturer_check_date'] ?? ''); ?>" /></label>
             <label>Gültigkeit in Tagen<input type="number" name="manufacturer_validity_days" min="0" value="<?= e($editItem['manufacturer_validity_days'] ?? '0'); ?>" /></label>
@@ -166,6 +174,8 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
         <div class="row two-col">
             <label>Ausmusterungsdatum<input type="date" name="retired_at" value="<?= e($editItem['retired_at'] ?? ''); ?>" /></label>
             <label>Notiz<textarea name="notes" rows="3"><?= e($editItem['notes'] ?? ''); ?></textarea></label>
+        </div>
+        </section>
         </div>
         <fieldset><legend>Benachrichtigungen</legend><div class="checkbox-row">
             <label><input type="checkbox" name="notification_30_days" value="1" <?= !empty($editItem['notifications']['30_days']) || !$editItem ? 'checked' : ''; ?> /> 30 Tage</label>

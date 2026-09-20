@@ -7,6 +7,10 @@ class Auth
     private const DEFAULT_PASSWORD = 'GliderAdmin2026!';
     private const REMEMBER_COOKIE = 'glider_remember';
     private const REMEMBER_SECONDS = 2419200;
+    public const STATUS_PENDING_VERIFICATION = 'pending_verification';
+    public const STATUS_PENDING_APPROVAL = 'pending_approval';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_DEACTIVATED = 'deactivated';
 
     private static bool $booted = false;
 
@@ -42,10 +46,21 @@ class Auth
 
     public static function requireAdmin(): void
     {
-        self::requireLogin();
+        self::requireActiveAccount();
         if (!self::isAdmin()) {
             http_response_code(403);
             exit('Zugriff verweigert.');
+        }
+    }
+
+    public static function requireActiveAccount(): void
+    {
+        self::requireLogin();
+        $accountStatus = self::accountStatus();
+        if ($accountStatus !== self::STATUS_ACTIVE) {
+            self::logout();
+            header('Location: /login.php?account=' . rawurlencode($accountStatus));
+            exit;
         }
     }
 
@@ -67,6 +82,17 @@ class Auth
     public static function isAdmin(): bool
     {
         return (self::user()['role'] ?? '') === 'admin';
+    }
+
+    public static function accountStatus(?array $user = null): string
+    {
+        $user ??= self::user();
+        return (string) ($user['account_status'] ?? self::STATUS_ACTIVE);
+    }
+
+    public static function loginFailureReason(): string
+    {
+        return (string) ($_SESSION['login_failure_reason'] ?? '');
     }
 
     public static function preference(string $key, bool $default = false): bool
@@ -129,11 +155,17 @@ class Auth
         self::boot();
         foreach (Storage::readUsers() as $user) {
             if (strcasecmp((string) ($user['email'] ?? ''), trim($email)) === 0 && password_verify($password, (string) ($user['password_hash'] ?? ''))) {
+                if (self::accountStatus($user) !== self::STATUS_ACTIVE) {
+                    $_SESSION['login_failure_reason'] = self::accountStatus($user);
+                    return false;
+                }
                 self::startRememberedSession($user);
+                unset($_SESSION['login_failure_reason']);
                 AuditLog::recordEvent('technical', 'authentication', 'login', (int) $user['id'], self::userLabel($user));
                 return true;
             }
         }
+        unset($_SESSION['login_failure_reason']);
         return false;
     }
 
@@ -169,6 +201,88 @@ class Auth
         return self::DEFAULT_PASSWORD;
     }
 
+    public static function activeAdministrators(): array
+    {
+        return array_values(array_filter(Storage::readUsers(), static fn (array $user): bool =>
+            ($user['role'] ?? '') === 'admin' && self::accountStatus($user) === self::STATUS_ACTIVE
+        ));
+    }
+
+    public static function canDeactivateUser(int $userId): bool
+    {
+        $user = self::findUser($userId);
+        return $user === null || ($user['role'] ?? '') !== 'admin' || self::accountStatus($user) !== self::STATUS_ACTIVE || count(self::activeAdministrators()) > 1;
+    }
+
+    public static function deactivateUser(int $userId): bool
+    {
+        $user = self::findUser($userId);
+        if ($user === null || self::accountStatus($user) === self::STATUS_DEACTIVATED || !self::canDeactivateUser($userId)) {
+            return false;
+        }
+
+        $users = Storage::readUsers();
+        foreach ($users as $index => $storedUser) {
+            if ((int) ($storedUser['id'] ?? 0) === $userId) {
+                $users[$index]['account_status'] = self::STATUS_DEACTIVATED;
+                unset($users[$index]['remember_token_hash'], $users[$index]['remember_expires_at']);
+                break;
+            }
+        }
+        Storage::saveUsers($users);
+
+        $equipment = Storage::readEquipment();
+        foreach ($equipment as $index => $item) {
+            if ((int) ($item['user_id'] ?? 0) === $userId) {
+                $equipment[$index]['status'] = 'retired';
+                $equipment[$index]['retired_at'] = date('Y-m-d');
+            }
+        }
+        Storage::saveEquipment($equipment);
+        return true;
+    }
+
+    public static function activateUser(int $userId, string $role): bool
+    {
+        if (!in_array($role, ['user', 'admin'], true)) {
+            return false;
+        }
+        $users = Storage::readUsers();
+        foreach ($users as $index => $user) {
+            if ((int) ($user['id'] ?? 0) === $userId) {
+                if (!in_array(self::accountStatus($user), [self::STATUS_PENDING_APPROVAL, self::STATUS_DEACTIVATED], true)) {
+                    return false;
+                }
+                $users[$index]['account_status'] = self::STATUS_ACTIVE;
+                $users[$index]['role'] = $role;
+                Storage::saveUsers($users);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static function permanentlyDeleteDeactivatedUser(int $userId): bool
+    {
+        $user = self::findUser($userId);
+        if ($user === null || self::accountStatus($user) !== self::STATUS_DEACTIVATED) {
+            return false;
+        }
+        $users = array_values(array_filter(Storage::readUsers(), static fn (array $storedUser): bool => (int) ($storedUser['id'] ?? 0) !== $userId));
+        Storage::saveUsers($users);
+
+        $equipment = Storage::readEquipment();
+        foreach ($equipment as $index => $item) {
+            if ((int) ($item['user_id'] ?? 0) === $userId) {
+                $equipment[$index]['user_id'] = 0;
+                $equipment[$index]['status'] = 'retired';
+                $equipment[$index]['retired_at'] = $equipment[$index]['retired_at'] ?: date('Y-m-d');
+            }
+        }
+        Storage::saveEquipment($equipment);
+        return true;
+    }
+
     private static function migrateUsers(): void
     {
         $users = Storage::readUsers();
@@ -188,6 +302,10 @@ class Auth
             }
             if (!is_array($users[$index]['preferences'] ?? null)) {
                 $users[$index]['preferences'] = [];
+                $changed = true;
+            }
+            if (!in_array(($users[$index]['account_status'] ?? ''), [self::STATUS_PENDING_VERIFICATION, self::STATUS_PENDING_APPROVAL, self::STATUS_ACTIVE, self::STATUS_DEACTIVATED], true)) {
+                $users[$index]['account_status'] = self::STATUS_ACTIVE;
                 $changed = true;
             }
             if (($users[$index]['role'] ?? '') === 'admin') {

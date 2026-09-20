@@ -6,6 +6,7 @@ require_once __DIR__ . '/../src/Auth.php';
 use Glider\Storage;
 use Glider\Auth;
 
+Auth::requireActiveAccount();
 Storage::ensure();
 $settings = Storage::readSettings();
 $appName = $settings['app']['name'] ?? 'Glider Equipment Tracker';

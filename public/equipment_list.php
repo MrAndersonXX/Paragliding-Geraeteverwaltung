@@ -5,6 +5,7 @@ require __DIR__ . '/_layout.php';
 use Glider\Storage;
 use Glider\Auth;
 
+Auth::requireActiveAccount();
 Storage::ensure();
 $allEquipment = Storage::readEquipment();
 $equipment = $allEquipment;

@@ -4,10 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-20
+
 ### Added
 - Added a permanent administrator audit log for business and technical changes, including the modifying user, timestamp, filters, and field-level change details.
+- Added self-registration with SMTP email verification, administrator approval, and role assignment.
+- Added account lifecycle controls for self-deactivation, administrator reactivation, and permanent deletion of deactivated accounts.
 
 ### Changed
+- Deactivating an account archives its assigned equipment; permanently deleted accounts leave archived equipment, history, and documents unassigned.
+- Access to equipment, inspection, and calendar pages now requires an active account status; pending or deactivated accounts are redirected to the login page with an explanatory message.
+
 - Simplified inspection planning to use the purchase date, actual inspection date, and next planned inspection date.
 - The inspection interval can be changed permanently when recording an actual inspection.
 - Removed the separate inspection-start date from the active workflow.

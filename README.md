@@ -59,8 +59,13 @@ Für jedes Gerät können erfasst werden:
 
 - Die bestehenden Benutzer werden beim ersten Login als Administratoren übernommen.
 - Das initiale Passwort für bestehende Benutzer lautet `GliderAdmin2026!` und sollte anschließend im Benutzerbereich geändert werden.
+- Neue Benutzer können sich selbst mit Vorname, Nachname, E-Mail-Adresse und Passwort registrieren. Ihre E-Mail-Adresse wird mit einem sechsstelligen, 15 Minuten gültigen Bestätigungscode verifiziert.
+- Nach erfolgreicher E-Mail-Bestätigung erhalten alle aktiven Administratoren eine Benachrichtigung. Ein Administrator gibt das Konto anschließend als Benutzer oder Administrator frei.
+- Vor der Freigabe ist keine Anmeldung möglich; unbestätigte, wartende und deaktivierte Konten können keine Fach- oder Benutzerdaten einsehen oder ändern.
 - Administratoren haben Zugriff auf alle Bereiche und Geräte.
 - Normale Benutzer sehen und bearbeiten nur ihre eigenen Geräte und können neue Geräte nur sich selbst zuweisen.
+- Benutzer können ihr eigenes Profil mit Passwortbestätigung deaktivieren. Dabei werden alle zugeordneten Geräte archiviert. Administratoren können deaktivierte Konten reaktivieren; die Geräte bleiben dann archiviert und dem Konto zugeordnet.
+- Administratoren können deaktivierte Konten endgültig löschen. Deren archivierte Geräte, Prüfungshistorie und Dokumente bleiben erhalten, werden aber keinem Benutzer mehr zugeordnet. Das letzte aktive Administratorkonto kann nicht deaktiviert, herabgestuft oder gelöscht werden.
 - Der Loginstatus wird per HttpOnly-Cookie vier Wochen gespeichert und bei jedem Öffnen der Anwendung verlängert.
 - Administratoren können im Änderungsprotokoll alle fachlichen und technischen Änderungen nach Zeit, Benutzer, Bereich, Aktion und Ereignisart filtern.
 - Das Änderungsprotokoll wird dauerhaft geführt und enthält unter anderem Geräte, Prüfungen, Dokumente, Benutzer, Kategorien, Typen, Einstellungen sowie erfolgreiche An- und Abmeldungen.

@@ -5,7 +5,7 @@ require_once __DIR__ . '/../src/Auth.php';
 
 use Glider\Auth;
 
-Auth::requireLogin();
+Auth::requireActiveAccount();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

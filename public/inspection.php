@@ -8,6 +8,7 @@ use Glider\InspectionCalculator;
 use Glider\Storage;
 use Glider\Auth;
 
+Auth::requireActiveAccount();
 Storage::ensure();
 $equipment = Storage::readEquipment();
 $documentCategories = Storage::readDocumentCategories();

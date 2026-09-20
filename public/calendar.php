@@ -7,7 +7,7 @@ use Glider\Storage;
 use Glider\Auth;
 use Glider\EquipmentTimeline;
 
-Auth::requireLogin();
+Auth::requireActiveAccount();
 $equipment = Storage::readEquipment();
 $currentUser = Auth::user();
 if (!Auth::isAdmin()) {

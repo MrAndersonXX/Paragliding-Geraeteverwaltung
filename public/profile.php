@@ -125,6 +125,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update_profile') {
     Auth::updateCurrentUser(['pending_email' => null, 'pending_email_code_hash' => null, 'pending_email_expires_at' => null, 'pending_email_attempts' => null, 'pending_email_requested_at' => null]);
     header('Location: /profile.php?cancelled=1');
     exit;
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'deactivate_profile') {
+    $currentPassword = (string) ($_POST['current_password'] ?? '');
+    if (!password_verify($currentPassword, (string) ($user['password_hash'] ?? ''))) {
+        $message = 'Das aktuelle Passwort ist nicht korrekt.';
+        $messageClass = 'alert alert-error';
+    } elseif (!Auth::deactivateUser((int) $user['id'])) {
+        $message = 'Das letzte aktive Administratorkonto kann nicht deaktiviert werden.';
+        $messageClass = 'alert alert-error';
+    } else {
+        Auth::logout();
+        header('Location: /login.php?account=' . Auth::STATUS_DEACTIVATED);
+        exit;
+    }
 }
 
 $user = Auth::user();
@@ -151,6 +164,7 @@ if (isset($_GET['saved'])): ?><div class="alert">Profil wurde gespeichert.</div>
                 <label>E-Mail-Adresse<input type="email" name="email" value="<?= e($user['email'] ?? ''); ?>" required /></label>
                 <p class="form-hint">Wird eine neue E-Mail-Adresse eingetragen, muss diese über einen per Mail zugesendeten Bestätigungscode freigeschaltet werden.</p>
                 <label>Aktueller Userlevel<input type="text" value="<?= ($user['role'] ?? 'admin') === 'admin' ? 'Administrator' : 'Benutzer'; ?>" disabled title="Der Userlevel kann nur von einem Administrator über die Benutzerverwaltung geändert werden." /></label>
+                <label>Kontostatus<input type="text" value="<?= e(match (Auth::accountStatus($user)) { Auth::STATUS_PENDING_VERIFICATION => 'E-Mail-Bestätigung ausstehend', Auth::STATUS_PENDING_APPROVAL => 'Freigabe ausstehend', Auth::STATUS_DEACTIVATED => 'Deaktiviert', default => 'Aktiv' }); ?>" disabled title="Der Kontostatus wird durch Registrierung oder Benutzerverwaltung festgelegt." /></label>
             </section>
             <section class="form-section">
                 <h3>Passwort</h3>
@@ -181,4 +195,13 @@ if (isset($_GET['saved'])): ?><div class="alert">Profil wurde gespeichert.</div>
     </form>
 </section>
 <?php endif; ?>
+<section class="card edit-surface">
+    <div class="edit-header"><div><p class="eyebrow">Profil</p><h2>Profil deaktivieren</h2></div></div>
+    <p>Dein Konto wird deaktiviert und alle dir zugeordneten Geräte werden archiviert. Ein Administrator kann dein Konto später wieder aktivieren.</p>
+    <form method="post" class="stacked-form" data-confirm="Profil wirklich deaktivieren? Deine Geräte werden archiviert und du wirst abgemeldet.">
+        <input type="hidden" name="action" value="deactivate_profile" />
+        <label>Aktuelles Passwort<input type="password" name="current_password" required /></label>
+        <button type="submit" class="button-danger">Profil deaktivieren</button>
+    </form>
+</section>
 <?php pageFooter();

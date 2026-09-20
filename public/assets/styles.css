@@ -1271,7 +1271,7 @@ tbody tr:hover {
 
 .image-viewer-overlay {
     align-items: center;
-    background: rgba(16, 42, 67, 0.75);
+    background: transparent;
     display: flex;
     inset: 0;
     justify-content: center;
@@ -1285,16 +1285,29 @@ tbody tr:hover {
 }
 
 .image-viewer-modal {
+    align-items: center;
+    display: flex;
+    justify-content: center;
     max-height: 90vh;
     max-width: min(90vw, 70rem);
     position: relative;
 }
 
-.image-viewer-modal img {
+.image-viewer-image {
+    background: transparent;
     display: block;
     max-height: 90vh;
-    max-width: 100%;
+    max-width: 90vw;
+    padding: 0;
+}
+
+.image-viewer-image img {
+    display: block;
+    height: auto;
+    max-height: 90vh;
+    max-width: 90vw;
     object-fit: contain;
+    width: auto;
 }
 
 .image-viewer-close {

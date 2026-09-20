@@ -316,7 +316,9 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
     <div class="image-viewer-overlay" data-image-viewer hidden>
         <div class="image-viewer-modal" role="dialog" aria-modal="true" aria-label="Artikelbild vergrößert anzeigen">
             <button type="button" class="button-muted image-viewer-close" data-close-image-viewer>Schließen</button>
-            <img src="/equipment_image.php?id=<?= (int) ($editItem['id'] ?? 0); ?>" alt="Artikelbild <?= e($editItem['name'] ?? ''); ?>" />
+            <button type="button" class="image-viewer-image" data-close-image-viewer aria-label="Artikelbild verkleinern">
+                <img src="/equipment_image.php?id=<?= (int) ($editItem['id'] ?? 0); ?>" alt="Artikelbild <?= e($editItem['name'] ?? ''); ?>" />
+            </button>
         </div>
     </div>
 <?php endif; ?>
@@ -382,7 +384,6 @@ const imagePickerBody = document.querySelector('[data-image-picker-body]');
 const imagePickerCloseButton = document.querySelector('[data-close-image-picker]');
 const imageViewerTrigger = document.querySelector('[data-open-image-viewer]');
 const imageViewerOverlay = document.querySelector('[data-image-viewer]');
-const imageViewerCloseButton = document.querySelector('[data-close-image-viewer]');
 
 const closeImagePicker = function () {
     if (imagePickerOverlay) {
@@ -481,7 +482,9 @@ imagePickerOverlay?.addEventListener('click', function (event) {
 imageViewerTrigger?.addEventListener('click', function () {
     imageViewerOverlay.hidden = false;
 });
-imageViewerCloseButton?.addEventListener('click', closeImageViewer);
+document.querySelectorAll('[data-close-image-viewer]').forEach(function (element) {
+    element.addEventListener('click', closeImageViewer);
+});
 imageViewerOverlay?.addEventListener('click', function (event) {
     if (event.target === imageViewerOverlay) {
         closeImageViewer();

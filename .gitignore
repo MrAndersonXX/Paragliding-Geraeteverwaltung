@@ -13,6 +13,9 @@ composer.lock
 # Runtime
 /storage/
 !storage/app/
+!storage/app/backups/
+storage/app/backups/*
+!storage/app/backups/.gitkeep
 
 # Database and cache runtime data
 /mysql/*

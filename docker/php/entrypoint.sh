@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-mkdir -p /var/www/html/storage/data /var/www/html/storage/app
+mkdir -p /var/www/html/storage/data/uploads /var/www/html/storage/data/images /var/www/html/storage/app/backups
 chown -R www-data:www-data /var/www/html/storage
 chmod -R a+rwX /var/www/html/storage
 

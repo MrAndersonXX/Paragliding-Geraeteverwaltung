@@ -1,0 +1,32 @@
+# Synology DS920+ / Container Manager deployment.
+#
+# Unlike docker-compose.yml (used for local development with live-reloading
+# bind mounts), this stack builds two self-contained images that already
+# include the application code. Only the persistent data (JSON records,
+# uploaded documents, equipment images) lives in a named Docker volume that
+# Container Manager creates and manages itself - no manual folder creation
+# or DSM shared-folder ACL changes are required on the NAS.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      TZ: Europe/Berlin
+    volumes:
+      - glider_storage:/var/www/html/storage
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8282:80"
+    depends_on:
+      - app
+
+volumes:
+  glider_storage:

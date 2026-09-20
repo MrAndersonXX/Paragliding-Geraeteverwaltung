@@ -25,7 +25,9 @@ RUN composer install --no-dev --no-interaction --prefer-dist --no-progress \
     && mkdir -p /var/www/html/resources \
     && curl -fL https://unicode.org/Public/emoji/latest/emoji-test.txt -o /var/www/html/resources/emoji-test.txt \
     && sed -i 's/^;clear_env = no/clear_env = no/' /usr/local/etc/php-fpm.d/www.conf \
-    && chmod +x /var/www/html/docker/php/entrypoint.sh
+    && chmod +x /var/www/html/docker/php/entrypoint.sh \
+    && find /var/www/html/public /var/www/html/src /var/www/html/config -type d -exec chmod 755 {} + \
+    && find /var/www/html/public /var/www/html/src /var/www/html/config -type f -exec chmod 644 {} +
 
 ENTRYPOINT ["/var/www/html/docker/php/entrypoint.sh"]
 CMD ["php-fpm"]

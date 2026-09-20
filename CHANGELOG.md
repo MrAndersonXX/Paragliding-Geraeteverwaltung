@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-20
+
+### Added
+- Added an admin-only Import/Export page for the full data set (equipment, users, settings, categories, equipment types, documents, inspection history and equipment images) as a single ZIP archive, including an automatic safety backup before every restore.
+- Added `docker-compose.synology.yml` with dedicated app and nginx images for Synology DS920+ Container Manager: the application code is baked into both images at build time, and the only persistent data lives in a Docker-managed named volume that is created and permissioned automatically, without manual DSM ACL changes.
+
 ## [0.4.0] - 2026-09-20
 
 ### Added

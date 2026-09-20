@@ -13,9 +13,10 @@ Ein Docker-basierter Web-Server für die Verwaltung und Überwachung von Gleitsc
 - Gerätealter im Kalender-Mouseover ab dem Folgejahr der Anschaffung
 - Archivierte Geräte mit weiterhin sichtbarer Historie
 - Vertikaler Zeitstrahl in der Geräteansicht
-- Synology DiskStation 920+ kompatibles Docker-Setup
+- Import/Export aller Daten, Einstellungen, Benutzer, Bilder und angehängten Dateien als ein ZIP-Archiv
+- Synology DiskStation 920+ kompatibles Docker-Setup mit automatischer Ordnerstruktur und Berechtigungsvergabe über Container Manager
 
-Version: 0.1.0
+Version: 0.5.0
 
 ## Überblick
 
@@ -87,6 +88,12 @@ Für jedes Gerät können erfasst werden:
 - Dokumente können als PDF oder andere zulässige Dateien hochgeladen werden.
 - Kategorien sind frei anlegbar, z. B. Kaufbeleg, Prüfprotokoll, Herstellerinfo, Wartung, Nachprüfung, Sonstiges.
 
+### Import/Export
+
+- Unter `Import / Export` können Administratoren den gesamten Datenbestand (Geräte, Benutzer, Einstellungen, Dokumentkategorien, Gerätetypen, Dokumente, Prüfhistorie und Gerätebilder) als ZIP-Archiv exportieren.
+- Beim Import wird das hochgeladene Archiv geprüft und der gesamte Datenbestand ersetzt; zuvor wird automatisch eine Sicherheitskopie des bisherigen Stands unter `storage/app/backups/` angelegt.
+- Nach einem Import ist eine erneute Anmeldung erforderlich, da sich die Benutzerdaten geändert haben können.
+
 ### Benachrichtigungen
 
 - E-Mail-Benachrichtigungen erfolgen über SMTP.
@@ -118,6 +125,7 @@ Für jedes Gerät können erfasst werden:
 .
 ├── docker/
 │   ├── nginx/
+│   │   ├── Dockerfile
 │   │   └── default.conf
 │   └── php/
 │       ├── Dockerfile
@@ -129,6 +137,7 @@ Für jedes Gerät können erfasst werden:
 ├── VERSION
 ├── composer.json
 ├── docker-compose.yml
+├── docker-compose.synology.yml
 ├── README.md
 ├── config/
 │   └── app.php
@@ -142,6 +151,7 @@ Für jedes Gerät können erfasst werden:
 │   ├── index.php
 │   ├── login.php
 │   ├── logout.php
+│   ├── backup.php
 │   └── assets/
 │       └── styles.css
 ├── scripts/
@@ -149,13 +159,16 @@ Für jedes Gerät können erfasst werden:
 ├── src/
 │   ├── Auth.php
 │   ├── Config.php
+│   ├── BackupManager.php
 │   └── NotificationService.php
 ├── redis/
 │   └── .gitkeep
 └── storage/
 │   ├── .gitkeep
 │   ├── app/
-│   │   └── .gitkeep
+│   │   ├── .gitkeep
+│   │   └── backups/
+│   │       └── .gitkeep
 │   └── data/
 │       └── .gitkeep
 ```
@@ -199,7 +212,32 @@ Zum Beenden:
 docker compose down
 ```
 
-## Synology-Deployment
+## Synology-Deployment (Container Manager, empfohlen)
+
+Für die Synology DS920+ liegt `docker-compose.synology.yml` bereit. Sie baut zwei eigenständige, in sich abgeschlossene Images (App und Nginx) und benötigt außer dem Projektordner selbst **keine** Bind-Mounts für `public`, `src`, `config` oder `storage`. Die persistenten Daten (Geräte, Benutzer, Einstellungen, Dokumente, Bilder) liegen in einem von Docker verwalteten benannten Volume, das beim ersten Start automatisch angelegt wird; die passenden Verzeichnisse und Berechtigungen darin erstellt der App-Container selbständig über seinen Entrypoint. Damit entfallen die DSM-ACL-Anpassungen und manuellen `chmod`-Schritte, die für das klassische Bind-Mount-Setup weiter unten beschrieben sind.
+
+1. Projektarchiv wie gewohnt nach `/volume1/docker/glider-tracker` laden (Schritt 1–2 im klassischen Setup weiter unten gelten unverändert, da für den Image-Build weiterhin der vollständige Quellcode benötigt wird).
+2. In Container Manager ein neues Projekt anlegen, als Pfad `/volume1/docker/glider-tracker` und als Compose-Datei `docker-compose.synology.yml` auswählen (oder per SSH: `docker compose -f docker-compose.synology.yml up -d --build`).
+3. Container Manager baut `glider-tracker-app` (PHP-FPM, Code aus dem Repository gebacken) und `glider-tracker-nginx` (Nginx mit gebackenem `public`-Verzeichnis) und legt automatisch das Volume für `storage` an.
+4. Webzugriff unter `http://<synology-ip>:8282`, bzw. über einen Reverse Proxy auf `nginx:80`.
+
+Datensicherung und -wiederherstellung laufen über die Weboberfläche unter `Import / Export` (nur für Administratoren) und erzeugen bzw. lesen ein ZIP-Archiv mit allen Geräten, Benutzern, Einstellungen, Kategorien, Gerätetypen, Dokumenten und Gerätebildern. Ein direkter Dateisystemzugriff auf das Docker-Volume ist dafür nicht nötig; für ein manuelles Rohdaten-Backup des Volumes genügt z. B.:
+
+```bash
+docker run --rm -v glider-tracker_glider_storage:/data -v "$PWD":/backup alpine \
+  tar czf /backup/glider-storage-backup.tar.gz -C /data .
+```
+
+Der Name des Volumes richtet sich nach dem Projektnamen (Standard: Ordnername, hier `glider-tracker`); mit `docker volume ls` lässt sich der tatsächliche Name prüfen.
+
+Bei Code-Änderungen im Repository müssen beide Images neu gebaut werden:
+
+```bash
+docker compose -f docker-compose.synology.yml build --no-cache
+docker compose -f docker-compose.synology.yml up -d --force-recreate
+```
+
+## Synology-Deployment (klassisches Bind-Mount-Setup)
 
 1. Ordner erstellen:
 

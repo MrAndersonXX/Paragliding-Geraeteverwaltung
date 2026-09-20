@@ -19,6 +19,8 @@ if ($accountStatus === Auth::STATUS_PENDING_VERIFICATION) {
     $message = 'Deine Registrierung wartet noch auf die Freigabe durch einen Administrator.';
 } elseif ($accountStatus === Auth::STATUS_DEACTIVATED) {
     $message = 'Dieses Benutzerkonto wurde deaktiviert.';
+} elseif (!empty($_GET['imported'])) {
+    $message = 'Die Datensicherung wurde eingespielt. Bitte melde dich erneut an.';
 }
 $redirect = (string) ($_POST['redirect'] ?? $_GET['redirect'] ?? '/');
 if (!str_starts_with($redirect, '/') || str_starts_with($redirect, '//')) {

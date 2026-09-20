@@ -1,5 +1,7 @@
 # Glider Equipment Tracker
 
+Öffentliches GitHub-Projekt: [MrAndersonXX/Paragliding-Geraeteverwaltung](https://github.com/MrAndersonXX/Paragliding-Geraeteverwaltung)
+
 Ein Docker-basierter Web-Server für die Verwaltung und Überwachung von Gleitschirm-, Rettungsgerät-, Gurtzeug-, Helm- und Zubehör-Ausrüstung. Die Anwendung unterstützt:
 
 - Geräteverwaltung mit Hersteller, Typ, Größe, Seriennummer, Anschaffungsdatum und Status
@@ -249,7 +251,7 @@ cd /volume1/docker/glider-tracker
 2. Das GitHub-Projekt ohne Git direkt als Archiv in diesen Ordner laden. Die Compose-Datei verwendet projekt-relative Mounts, daher funktioniert der Stack unabhängig vom konkreten Synology-Pfad:
 
 ```bash
-curl -fL https://codeload.github.com/MrAndersonXX/Paragliding-Ger-teverwaltung/tar.gz/refs/heads/main -o /tmp/glider-tracker.tar.gz
+curl -fL https://codeload.github.com/MrAndersonXX/Paragliding-Geraeteverwaltung/tar.gz/refs/heads/main -o /tmp/glider-tracker.tar.gz
 tar -xzf /tmp/glider-tracker.tar.gz --strip-components=1 -C /volume1/docker/glider-tracker
 rm -f /tmp/glider-tracker.tar.gz
 ```
@@ -263,7 +265,7 @@ Wenn das GitHub-Repository privat ist, liefert GitHub ohne Anmeldung `404 Not Fo
 ```bash
 read -s GITHUB_TOKEN
 curl -fL -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-  https://codeload.github.com/MrAndersonXX/Paragliding-Ger-teverwaltung/tar.gz/refs/heads/main \
+  https://codeload.github.com/MrAndersonXX/Paragliding-Geraeteverwaltung/tar.gz/refs/heads/main \
   -o /tmp/glider-tracker.tar.gz
 unset GITHUB_TOKEN
 tar -xzf /tmp/glider-tracker.tar.gz --strip-components=1 -C /volume1/docker/glider-tracker

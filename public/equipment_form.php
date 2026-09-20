@@ -11,7 +11,7 @@ Storage::ensure();
 $equipment = Storage::readEquipment();
 $users = Storage::readUsers();
 $equipmentTypes = Storage::readEquipmentTypes();
-$editId = (int) ($_GET['edit'] ?? $_POST['id'] ?? 0);
+$editId = (int) ($_GET['id'] ?? $_GET['edit'] ?? $_POST['id'] ?? 0);
 $editItem = null;
 foreach ($equipment as $existing) {
     if ((int) ($existing['id'] ?? 0) === $editId) {
@@ -25,6 +25,7 @@ $currentUser = Auth::user();
 $isAdmin = Auth::isAdmin();
 $visibleEquipment = $isAdmin ? $equipment : array_values(array_filter($equipment, static fn ($item) => (int) ($item['user_id'] ?? 0) === (int) ($currentUser['id'] ?? 0)));
 $isNew = $editItem === null;
+$editMode = $isNew || isset($_GET['edit']) || $_SERVER['REQUEST_METHOD'] === 'POST';
 if (!$isAdmin && $editItem !== null && (int) ($editItem['user_id'] ?? 0) !== (int) ($currentUser['id'] ?? 0)) {
     http_response_code(403);
     exit('Zugriff verweigert.');
@@ -33,6 +34,18 @@ $assignedEquipmentId = 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = isset($_POST['id']) && $_POST['id'] !== '' ? (int) $_POST['id'] : 0;
+    if (($_POST['action'] ?? '') === 'archive_equipment') {
+        foreach ($equipment as $index => $existing) {
+            if ((int) ($existing['id'] ?? 0) === $id) {
+                $equipment[$index]['status'] = 'retired';
+                $equipment[$index]['retired_at'] = date('Y-m-d');
+                Storage::saveEquipment($equipment);
+                header('Location: /equipment_list.php?saved=1');
+                exit;
+            }
+        }
+        $message = 'Gerät konnte nicht archiviert werden.';
+    }
     $id = $id ?: ((count($equipment) > 0 ? max(array_map(fn ($item) => (int) ($item['id'] ?? 0), $equipment)) : 0) + 1);
     $formEquipmentType = trim((string) ($_POST['equipment_type'] ?? ''));
     $assignedEquipmentId = (int) ($_POST['assigned_equipment_id'] ?? 0);
@@ -98,12 +111,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-pageHeader($editItem ? 'Gerät bearbeiten' : 'Neues Gerät');
+pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Gerätedetails');
 ?>
 <?php if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif; ?>
 <section class="card">
     <div class="section-actions"><a class="button-link" href="/equipment_list.php">Zur Geräteliste</a></div>
-    <form method="post" class="stacked-form" data-edit-form>
+<?php if ($editMode): ?><form method="post" class="stacked-form" data-edit-form>
         <input type="hidden" name="id" value="<?= e($editItem['id'] ?? ''); ?>" />
         <input type="hidden" name="return_to" value="" />
         <div class="row two-col">
@@ -147,6 +160,23 @@ pageHeader($editItem ? 'Gerät bearbeiten' : 'Neues Gerät');
         </div></fieldset>
         <button type="submit"><?= $editItem ? 'Änderungen speichern' : 'Gerät speichern'; ?></button>
     </form>
+<?php else: ?>
+    <dl class="equipment-summary">
+        <dt>Gerätename</dt><dd><?= e($editItem['name'] ?? ''); ?></dd>
+        <dt>Gerätetyp</dt><dd><?= e($editItem['equipment_type'] ?? $editItem['category'] ?? ''); ?></dd>
+        <dt>Hersteller</dt><dd><?= e($editItem['manufacturer'] ?? ''); ?></dd>
+        <dt>Größe</dt><dd><?= e($editItem['size'] ?? ''); ?></dd>
+        <dt>Seriennummer</dt><dd><?= e($editItem['serial_number'] ?? ''); ?></dd>
+        <dt>Anschaffungsdatum</dt><dd><?= e($editItem['purchase_date'] ?? ''); ?></dd>
+        <dt>Status</dt><dd><?= e($editItem['status'] ?? 'active'); ?></dd>
+        <dt>Prüfungsintervall</dt><dd><?= (int) ($editItem['inspection_interval_days'] ?? 0); ?> Tage</dd>
+        <dt>Letzte Prüfung</dt><dd><?= e($editItem['last_inspection_date'] ?? ''); ?></dd>
+        <dt>Nächste Prüfung</dt><dd><?= e($editItem['next_inspection_date'] ?? ''); ?></dd>
+        <dt>Hersteller-Nachprüfung</dt><dd><?= e($editItem['manufacturer_check_date'] ?? ''); ?></dd>
+        <dt>Notiz</dt><dd><?= e($editItem['notes'] ?? ''); ?></dd>
+    </dl>
+    <div class="button-row"><a class="button-link" href="/equipment_form.php?id=<?= (int) $editItem['id']; ?>&edit=1">Bearbeiten</a><?php if (($editItem['status'] ?? 'active') !== 'retired'): ?><form method="post" class="action-form"><input type="hidden" name="action" value="archive_equipment" /><input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" /><button type="submit" class="button-muted">Archivieren</button></form><?php endif; ?></div>
+<?php endif; ?>
 </section>
 <script>
 const equipmentType = document.getElementById('equipment-type');

@@ -92,6 +92,26 @@ body {
     margin: 0;
 }
 
+.equipment-summary {
+    display: grid;
+    grid-template-columns: minmax(11rem, 0.35fr) minmax(0, 1fr);
+    margin: 0;
+    row-gap: 0.75rem;
+}
+
+.equipment-summary dt {
+    color: #5c7891;
+    font-weight: 700;
+}
+
+.equipment-summary dd {
+    margin: 0;
+}
+
+.equipment-row {
+    cursor: pointer;
+}
+
 .calendar-shell {
     background: #fff;
     border: 1px solid #dce5ee;

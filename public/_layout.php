@@ -27,9 +27,13 @@ function pageHeader(string $title): void
         <link rel="stylesheet" href="/assets/styles.css" />
     </head>
     <body>
-    <aside class="sidebar">
+    <aside class="sidebar" data-sidebar>
         <a class="brand" href="/"><?= e($appName); ?></a>
-        <nav class="sidebar-nav">
+        <button class="sidebar-toggle" type="button" data-sidebar-toggle aria-controls="primary-navigation" aria-expanded="false">
+            <span class="sidebar-toggle-icon" aria-hidden="true"></span>
+            <span>Menü</span>
+        </button>
+        <nav class="sidebar-nav" id="primary-navigation">
             <a href="/">Übersicht</a>
             <a href="/equipment_list.php">Geräte</a>
             <a href="/calendar.php">Kalender</a>
@@ -140,6 +144,22 @@ function pageFooter(): void
                     returnTo.value = target.pathname + target.search;
                 }
                 form.submit();
+            });
+        });
+    });
+    document.querySelectorAll('[data-sidebar-toggle]').forEach(function (toggle) {
+        const sidebar = toggle.closest('[data-sidebar]');
+        if (!sidebar) {
+            return;
+        }
+        toggle.addEventListener('click', function () {
+            const isOpen = sidebar.classList.toggle('menu-open');
+            toggle.setAttribute('aria-expanded', String(isOpen));
+        });
+        sidebar.querySelectorAll('.sidebar-nav a, .sidebar-footer a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                sidebar.classList.remove('menu-open');
+                toggle.setAttribute('aria-expanded', 'false');
             });
         });
     });

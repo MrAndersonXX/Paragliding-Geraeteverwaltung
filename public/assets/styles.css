@@ -106,6 +106,10 @@ body {
     flex: 1 1 auto;
 }
 
+.sidebar-toggle {
+    display: none;
+}
+
 .role-badge {
     background: #1c4568;
     color: #dfeaf7;
@@ -1267,6 +1271,86 @@ tbody tr:hover {
         margin-left: 0;
         width: 100%;
         padding-top: 1.25rem;
+    }
+}
+
+@media (max-width: 900px) {
+    .sidebar {
+        align-items: center;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        min-height: 0;
+        padding: 1rem;
+        position: static;
+        width: 100%;
+    }
+
+    .brand {
+        margin-right: auto;
+    }
+
+    .sidebar-toggle {
+        align-items: center;
+        background: #1c4568;
+        border: 1px solid #47708e;
+        border-radius: 6px;
+        display: inline-flex;
+        gap: 0.45rem;
+        min-height: 2.5rem;
+        padding: 0.45rem 0.65rem;
+    }
+
+    .sidebar-toggle:hover,
+    .sidebar-toggle:focus {
+        background: #285778;
+    }
+
+    .sidebar-toggle-icon,
+    .sidebar-toggle-icon::before,
+    .sidebar-toggle-icon::after {
+        background: currentColor;
+        content: '';
+        display: block;
+        height: 2px;
+        position: relative;
+        width: 1rem;
+    }
+
+    .sidebar-toggle-icon::before {
+        position: absolute;
+        top: -0.3rem;
+    }
+
+    .sidebar-toggle-icon::after {
+        position: absolute;
+        top: 0.3rem;
+    }
+
+    .sidebar-nav,
+    .sidebar-footer {
+        display: none;
+        flex-basis: 100%;
+        margin-top: 0;
+    }
+
+    .sidebar.menu-open .sidebar-nav,
+    .sidebar.menu-open .sidebar-footer {
+        display: flex;
+    }
+
+    .sidebar-nav {
+        flex-direction: column;
+    }
+
+    .sidebar-footer {
+        margin-top: 0;
+    }
+
+    .container {
+        margin-left: 0;
+        padding: 1rem 0.75rem 2rem;
+        width: 100%;
     }
 }
 

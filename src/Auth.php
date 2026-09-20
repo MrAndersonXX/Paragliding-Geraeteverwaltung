@@ -5,6 +5,8 @@ namespace Glider;
 class Auth
 {
     private const DEFAULT_PASSWORD = 'GliderAdmin2026!';
+    private const REMEMBER_COOKIE = 'glider_remember';
+    private const REMEMBER_SECONDS = 2419200;
 
     private static bool $booted = false;
 
@@ -21,6 +23,11 @@ class Auth
         }
         self::migrateUsers();
         self::$booted = true;
+        self::restoreRememberedLogin();
+        $user = self::findUser((int) ($_SESSION['user_id'] ?? 0));
+        if ($user !== null && !empty($_COOKIE[self::REMEMBER_COOKIE])) {
+            self::renewRememberToken($user, (string) $_COOKIE[self::REMEMBER_COOKIE]);
+        }
     }
 
     public static function requireLogin(): void
@@ -49,10 +56,9 @@ class Auth
         if ($userId <= 0) {
             return null;
         }
-        foreach (Storage::readUsers() as $user) {
-            if ((int) ($user['id'] ?? 0) === $userId) {
-                return $user;
-            }
+        $user = self::findUser($userId);
+        if ($user !== null) {
+            return $user;
         }
         unset($_SESSION['user_id']);
         return null;
@@ -68,8 +74,7 @@ class Auth
         self::boot();
         foreach (Storage::readUsers() as $user) {
             if (strcasecmp((string) ($user['email'] ?? ''), trim($email)) === 0 && password_verify($password, (string) ($user['password_hash'] ?? ''))) {
-                session_regenerate_id(true);
-                $_SESSION['user_id'] = (int) $user['id'];
+                self::startRememberedSession($user);
                 return true;
             }
         }
@@ -79,6 +84,18 @@ class Auth
     public static function logout(): void
     {
         self::boot();
+        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        if ($userId > 0) {
+            $users = Storage::readUsers();
+            foreach ($users as $index => $user) {
+                if ((int) ($user['id'] ?? 0) === $userId) {
+                    unset($users[$index]['remember_token_hash'], $users[$index]['remember_expires_at']);
+                    Storage::saveUsers(array_values($users));
+                    break;
+                }
+            }
+        }
+        self::clearRememberCookie();
         $_SESSION = [];
         if (ini_get('session.use_cookies')) {
             $params = session_get_cookie_params();
@@ -120,5 +137,90 @@ class Auth
         if ($changed) {
             Storage::saveUsers($users);
         }
+    }
+
+    private static function findUser(int $userId): ?array
+    {
+        if ($userId <= 0) {
+            return null;
+        }
+        foreach (Storage::readUsers() as $user) {
+            if ((int) ($user['id'] ?? 0) === $userId) {
+                return $user;
+            }
+        }
+        return null;
+    }
+
+    private static function restoreRememberedLogin(): void
+    {
+        if (!empty($_SESSION['user_id']) || empty($_COOKIE[self::REMEMBER_COOKIE])) {
+            return;
+        }
+        $token = (string) $_COOKIE[self::REMEMBER_COOKIE];
+        $now = time();
+        foreach (Storage::readUsers() as $user) {
+            if (!empty($user['remember_token_hash']) && (int) ($user['remember_expires_at'] ?? 0) >= $now && password_verify($token, $user['remember_token_hash'])) {
+                session_regenerate_id(true);
+                $_SESSION['user_id'] = (int) $user['id'];
+                return;
+            }
+        }
+        self::clearRememberCookie();
+    }
+
+    private static function startRememberedSession(array $user): void
+    {
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = (int) $user['id'];
+        $token = bin2hex(random_bytes(32));
+        $users = Storage::readUsers();
+        foreach ($users as $index => $storedUser) {
+            if ((int) ($storedUser['id'] ?? 0) === (int) $user['id']) {
+                $users[$index]['remember_token_hash'] = password_hash($token, PASSWORD_DEFAULT);
+                $users[$index]['remember_expires_at'] = time() + self::REMEMBER_SECONDS;
+                Storage::saveUsers($users);
+                self::setRememberCookie($token);
+                return;
+            }
+        }
+    }
+
+    private static function renewRememberToken(array $user, string $token): void
+    {
+        if (empty($user['remember_token_hash']) || !password_verify($token, $user['remember_token_hash'])) {
+            return;
+        }
+        $users = Storage::readUsers();
+        foreach ($users as $index => $storedUser) {
+            if ((int) ($storedUser['id'] ?? 0) === (int) $user['id']) {
+                $users[$index]['remember_expires_at'] = time() + self::REMEMBER_SECONDS;
+                Storage::saveUsers($users);
+                self::setRememberCookie($token);
+                return;
+            }
+        }
+    }
+
+    private static function setRememberCookie(string $token): void
+    {
+        setcookie(self::REMEMBER_COOKIE, $token, [
+            'expires' => time() + self::REMEMBER_SECONDS,
+            'path' => '/',
+            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+    }
+
+    private static function clearRememberCookie(): void
+    {
+        setcookie(self::REMEMBER_COOKIE, '', [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
     }
 }

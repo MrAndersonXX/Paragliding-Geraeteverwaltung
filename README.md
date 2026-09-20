@@ -48,6 +48,7 @@ Für jedes Gerät können erfasst werden:
 - Das initiale Passwort für bestehende Benutzer lautet `GliderAdmin2026!` und sollte anschließend im Benutzerbereich geändert werden.
 - Administratoren haben Zugriff auf alle Bereiche und Geräte.
 - Normale Benutzer sehen und bearbeiten nur ihre eigenen Geräte und können neue Geräte nur sich selbst zuweisen.
+- Der Loginstatus wird per HttpOnly-Cookie vier Wochen gespeichert und bei jedem Öffnen der Anwendung verlängert.
 
 ### Prüfungslogik
 

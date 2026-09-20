@@ -218,10 +218,30 @@ docker compose down
 
 Für die Synology DS920+ liegt `docker-compose.synology.yml` bereit. Sie baut zwei eigenständige, in sich abgeschlossene Images (App und Nginx) und benötigt außer dem Projektordner selbst **keine** Bind-Mounts für `public`, `src`, `config` oder `storage`. Die persistenten Daten (Geräte, Benutzer, Einstellungen, Dokumente, Bilder) liegen in einem von Docker verwalteten benannten Volume, das beim ersten Start automatisch angelegt wird; die passenden Verzeichnisse und Berechtigungen darin erstellt der App-Container selbständig über seinen Entrypoint. Damit entfallen die DSM-ACL-Anpassungen und manuellen `chmod`-Schritte, die für das klassische Bind-Mount-Setup weiter unten beschrieben sind.
 
-1. Projektarchiv wie gewohnt nach `/volume1/docker/glider-tracker` laden (Schritt 1–2 im klassischen Setup weiter unten gelten unverändert, da für den Image-Build weiterhin der vollständige Quellcode benötigt wird).
-2. In Container Manager ein neues Projekt anlegen, als Pfad `/volume1/docker/glider-tracker` und als Compose-Datei `docker-compose.synology.yml` auswählen (oder per SSH: `docker compose -f docker-compose.synology.yml up -d --build`).
-3. Container Manager baut `glider-tracker-app` (PHP-FPM, Code aus dem Repository gebacken) und `glider-tracker-nginx` (Nginx mit gebackenem `public`-Verzeichnis) und legt automatisch das Volume für `storage` an.
-4. Webzugriff unter `http://<synology-ip>:8282`, bzw. über einen Reverse Proxy auf `nginx:80`.
+### Vorgehen in der Container-Manager-Oberfläche (DSM 7.2)
+
+1. **Projektdateien bereitstellen.** Über File Station oder SSH das Repository nach `/volume1/docker/glider-tracker` laden (siehe Schritt 1–2 im klassischen Setup weiter unten). Für den Image-Build wird weiterhin der vollständige Quellcode benötigt, auch wenn zur Laufzeit keine Bind-Mounts mehr aktiv sind.
+2. **Datei für den Projekt-Assistenten vorbereiten.** Der Container-Manager-Assistent erkennt im gewählten Ordner standardmäßig nur eine Datei namens `docker-compose.yml`. Da im selben Ordner auch die Entwicklungsvariante `docker-compose.yml` liegt, entweder
+   - `docker-compose.synology.yml` vor dem Import zusätzlich als `docker-compose.yml` in einen eigenen Unterordner (z. B. `/volume1/docker/glider-tracker-prod`) kopieren, oder
+   - im Assistenten den Editor-Schritt nutzen und den Inhalt von `docker-compose.synology.yml` dort manuell einfügen (siehe Schritt 4).
+3. **Container Manager öffnen** → Reiter **Projekt** → **Erstellen**.
+4. **Allgemein:** Projektname vergeben (z. B. `glider-tracker`) und als Pfad den unter Schritt 1/2 vorbereiteten Ordner auswählen.
+   - Erkennt der Assistent automatisch eine `docker-compose.yml`, deren Inhalt kurz gegenprüfen (zwei Dienste `app` und `nginx`, kein Abschnitt mit `./public`, `./src`, `./config` als Volume).
+   - Andernfalls **Docker Compose erstellen/bearbeiten** wählen und den Inhalt von `docker-compose.synology.yml` einfügen.
+5. **Web Portal** (falls angezeigt) überspringen oder später über den DSM-Reverse-Proxy einrichten.
+6. **Zusammenfassung** prüfen und auf **Fertig** klicken. Container Manager führt daraufhin `docker compose build` und `docker compose up -d` für das Projekt aus; der erste Build dauert wegen Composer-Install und Unicode-Download einige Minuten.
+7. **Ergebnis kontrollieren:**
+   - Reiter **Container**: `glider-tracker-app-1` und `glider-tracker-nginx-1` müssen im Status „Wird ausgeführt“ sein.
+   - Reiter **Volumen**: ein Volume mit Namen `<projektname>_glider_storage` muss vorhanden sein (automatisch angelegt, keine manuelle ACL-Konfiguration nötig).
+8. **Zugriff:** direkt über `http://<synology-ip>:8282`, oder in der DSM-Systemsteuerung unter **Anmeldeportal** → **Erweitert** → **Reverse-Proxy** einen Eintrag auf `localhost:8282` anlegen und eine eigene Domain/SSL-Zertifikat davorschalten.
+9. **Aktualisieren nach Code-Änderungen:** im Projekt über **Aktion** → **Build** neu bauen und anschließend **Aktion** → **Neu starten** ausführen (entspricht `docker compose build --no-cache` + `up -d --force-recreate`, siehe unten für die SSH-Variante).
+
+Alternativ funktioniert das gesamte Vorgehen auch ohne grafische Oberfläche vollständig per SSH:
+
+```bash
+cd /volume1/docker/glider-tracker
+docker compose -f docker-compose.synology.yml up -d --build
+```
 
 Datensicherung und -wiederherstellung laufen über die Weboberfläche unter `Import / Export` (nur für Administratoren) und erzeugen bzw. lesen ein ZIP-Archiv mit allen Geräten, Benutzern, Einstellungen, Kategorien, Gerätetypen, Dokumenten und Gerätebildern. Ein direkter Dateisystemzugriff auf das Docker-Volume ist dafür nicht nötig; für ein manuelles Rohdaten-Backup des Volumes genügt z. B.:
 

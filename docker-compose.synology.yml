@@ -1,18 +1,18 @@
 # Synology DS920+ / Container Manager deployment.
 #
-# Pulls pre-built images from the GitHub Container Registry (published by
-# .github/workflows/docker-publish.yml) - no repository checkout, build step,
-# or manual folder/permission setup is required on the NAS. Only this single
-# file needs to exist in the Container Manager project folder. Only the
-# persistent data (JSON records, uploaded documents, equipment images) lives
-# in a named Docker volume that Container Manager creates and manages itself.
+# Builds both images directly from the GitHub repository's main branch. The
+# Synology needs internet access to GitHub, Composer, and unicode.org during
+# the build. Only the persistent data (JSON records, uploaded documents,
+# equipment images) lives in a named Docker volume managed by Docker.
 #
-# If you cannot pull from ghcr.io (private fork, no internet egress), use
-# docker-compose.synology.build.yml instead, which builds the images locally
-# from the checked-out repository.
+# This requires a recent Docker Compose / BuildKit version that supports Git
+# URLs as build contexts. For older Container Manager versions, use
+# docker-compose.synology.build.yml with a local repository checkout instead.
 services:
   app:
-    image: ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-app:latest
+    build:
+      context: "https://github.com/MrAndersonXX/Paragliding-Geraeteverwaltung.git#main"
+      dockerfile: docker/php/Dockerfile
     restart: unless-stopped
     working_dir: /var/www/html
     environment:
@@ -21,7 +21,9 @@ services:
       - glider_storage:/var/www/html/storage
 
   nginx:
-    image: ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-nginx:latest
+    build:
+      context: "https://github.com/MrAndersonXX/Paragliding-Geraeteverwaltung.git#main"
+      dockerfile: docker/nginx/Dockerfile
     restart: unless-stopped
     ports:
       - "8282:80"

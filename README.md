@@ -16,9 +16,9 @@ Ein Docker-basierter Web-Server für die Verwaltung und Überwachung von Gleitsc
 - Archivierte Geräte mit weiterhin sichtbarer Historie
 - Vertikaler Zeitstrahl in der Geräteansicht
 - Import/Export aller Daten, Einstellungen, Benutzer, Bilder und angehängten Dateien als ein ZIP-Archiv
-- Synology DiskStation 920+ kompatibles Docker-Setup mit automatischer Ordnerstruktur und Berechtigungsvergabe über Container Manager; Images werden per GitHub Actions vorgebaut und aus der GitHub Container Registry gezogen
+- Synology DiskStation 920+ kompatibles Docker-Setup mit automatischer Ordnerstruktur und Berechtigungsvergabe über Container Manager; Images werden direkt aus dem GitHub-Repository gebaut
 
-Version: 0.6.0
+Version: 0.7.0
 
 ## Überblick
 
@@ -220,22 +220,22 @@ docker compose down
 
 ## Synology-Deployment (Container Manager, empfohlen)
 
-Für die Synology DS920+ liegt `docker-compose.synology.yml` bereit. Sie referenziert ausschließlich fertig gebaute Images aus der GitHub Container Registry (`ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-app` und `-nginx`, gebaut von [.github/workflows/docker-publish.yml](.github/workflows/docker-publish.yml) bei jedem Push nach `main`). Dadurch reicht auf der NAS **eine einzige Datei** – kein Git-Checkout, kein lokaler Build, kein manuelles Anlegen von Ordnern. Die persistenten Daten (Geräte, Benutzer, Einstellungen, Dokumente, Bilder) liegen in einem von Docker verwalteten benannten Volume, das beim ersten Start automatisch angelegt wird; die passenden Verzeichnisse und Berechtigungen darin erstellt der App-Container selbständig über seinen Entrypoint. Damit entfallen die DSM-ACL-Anpassungen und manuellen `chmod`-Schritte, die für das klassische Bind-Mount-Setup weiter unten beschrieben sind.
+Für die Synology DS920+ liegt `docker-compose.synology.yml` bereit. Sie baut die beiden Images direkt aus dem GitHub-Repository `https://github.com/MrAndersonXX/Paragliding-Geraeteverwaltung` vom Branch `main`; GHCR wird nicht benötigt. Die Synology muss während des Builds Zugriff auf GitHub, Composer und `unicode.org` haben. Die persistenten Daten (Geräte, Benutzer, Einstellungen, Dokumente, Bilder) liegen in einem von Docker verwalteten benannten Volume, das beim ersten Start automatisch angelegt wird; die passenden Verzeichnisse und Berechtigungen darin erstellt der App-Container selbständig über seinen Entrypoint.
 
-Voraussetzung: Die beiden Pakete müssen in GitHub unter **Packages** einmalig auf Sichtbarkeit **Public** gestellt werden (Repo → Packages → Paket öffnen → Package settings → Change visibility), sonst verlangt `docker pull` einen vorherigen `docker login ghcr.io` mit einem Personal Access Token.
+Voraussetzung ist eine aktuelle Docker-Compose-/BuildKit-Version, die Git-URLs als Build-Kontext unterstützt. Bei älteren Container-Manager-Versionen kann stattdessen die weiter unten beschriebene lokale Build-Variante verwendet werden.
 
 ### Vorgehen in der Container-Manager-Oberfläche (DSM 7.2)
 
 1. **Nur die Compose-Datei bereitstellen.** `docker-compose.synology.yml` aus dem Repository herunterladen und in einen neuen, sonst leeren Ordner legen, z. B. `/volume1/docker/glider-tracker/docker-compose.yml` (Container Manager erkennt im Projekt-Assistenten nur eine Datei mit genau diesem Namen).
 2. **Container Manager öffnen** → Reiter **Projekt** → **Erstellen**.
-3. **Allgemein:** Projektname vergeben (z. B. `glider-tracker`) und als Pfad den Ordner aus Schritt 1 auswählen. Der Assistent erkennt die `docker-compose.yml` automatisch und zeigt die beiden Dienste `app` und `nginx` mit `image:`-Referenzen (kein `build:`-Abschnitt).
+3. **Allgemein:** Projektname vergeben (z. B. `glider-tracker`) und als Pfad den Ordner aus Schritt 1 auswählen. Der Assistent erkennt die `docker-compose.yml` automatisch und zeigt die beiden Dienste `app` und `nginx` mit GitHub-Build-Kontexten.
 4. **Web Portal** (falls angezeigt) überspringen oder später über den DSM-Reverse-Proxy einrichten.
-5. **Zusammenfassung** prüfen und auf **Fertig** klicken. Container Manager führt `docker compose pull` und `docker compose up -d` aus – es wird nichts lokal gebaut.
+5. **Zusammenfassung** prüfen und auf **Fertig** klicken. Container Manager lädt den Quellcode von GitHub, baut beide Images lokal und startet anschließend die Container.
 6. **Ergebnis kontrollieren:**
    - Reiter **Container**: `glider-tracker-app-1` und `glider-tracker-nginx-1` müssen im Status „Wird ausgeführt“ sein.
    - Reiter **Volumen**: ein Volume mit Namen `<projektname>_glider_storage` muss vorhanden sein (automatisch angelegt, keine manuelle ACL-Konfiguration nötig).
 7. **Zugriff:** direkt über `http://<synology-ip>:8282`, oder in der DSM-Systemsteuerung unter **Anmeldeportal** → **Erweitert** → **Reverse-Proxy** einen Eintrag auf `localhost:8282` anlegen und eine eigene Domain/SSL-Zertifikat davorschalten.
-8. **Aktualisieren nach neuen Releases:** im Projekt über **Aktion** → **Aktualisieren** die neuen `:latest`-Images ziehen und die Container neu erstellen (entspricht `docker compose pull && docker compose up -d`, siehe unten für die SSH-Variante).
+8. **Aktualisieren nach Änderungen auf `main`:** im Projekt über **Aktion** → **Aktualisieren** die Images neu bauen und die Container neu erstellen (entspricht `docker compose build --pull && docker compose up -d`, siehe unten für die SSH-Variante).
 
 Alternativ funktioniert das gesamte Vorgehen auch ohne grafische Oberfläche vollständig per SSH:
 
@@ -251,11 +251,11 @@ Updates auf der Konsole:
 
 ```bash
 cd /volume1/docker/glider-tracker
-docker compose pull
+docker compose build --pull
 docker compose up -d
 ```
 
-Falls `ghcr.io` von der NAS aus nicht erreichbar ist oder die Images privat bleiben sollen, steht mit `docker-compose.synology.build.yml` die bisherige Variante zum lokalen Bauen aus dem vollständigen Repository weiter zur Verfügung (siehe Kommentar in der Datei).
+Falls die installierte Container-Manager-Version keine Git-URLs als Build-Kontext unterstützt, das Repository zunächst lokal auschecken oder als Archiv entpacken und dafür `docker-compose.synology.build.yml` verwenden.
 
 Datensicherung und -wiederherstellung laufen über die Weboberfläche unter `Import / Export` (nur für Administratoren) und erzeugen bzw. lesen ein ZIP-Archiv mit allen Geräten, Benutzern, Einstellungen, Kategorien, Gerätetypen, Dokumenten und Gerätebildern. Ein direkter Dateisystemzugriff auf das Docker-Volume ist dafür nicht nötig; für ein manuelles Rohdaten-Backup des Volumes genügt z. B.:
 

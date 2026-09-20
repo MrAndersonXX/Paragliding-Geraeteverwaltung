@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-20
+
+### Changed
+- Synology Compose baut App- und Nginx-Images direkt aus dem GitHub-Repository auf dem Branch `main`; GHCR wird für den Synology-Deployment-Weg nicht mehr benötigt.
+- README um den Remote-Git-Build, die erforderlichen Build-Voraussetzungen und den lokalen Fallback für ältere Container-Manager-Versionen ergänzt.
+
 ## [0.6.0] - 2026-09-20
 
 ### Added

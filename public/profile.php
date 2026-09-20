@@ -158,25 +158,7 @@ if (isset($_GET['saved'])): ?><div class="alert">Profil wurde gespeichert.</div>
             </section>
             <section class="form-section">
                 <h3>Emoticon</h3>
-                <fieldset class="emoji-picker">
-                    <legend>Emoticon auswählen</legend>
-                    <input type="hidden" name="emoji" id="selected-emoji" value="<?= e($user['emoji'] ?? ''); ?>" required />
-                    <?php foreach ($emojiGroups as $groupName => $subgroups): ?>
-                        <div class="emoji-group">
-                            <h3><?= e($groupName); ?></h3>
-                            <?php foreach ($subgroups as $subgroupName => $items): ?>
-                                <div class="emoji-subgroup">
-                                    <h4><?= e($subgroupName); ?></h4>
-                                    <div class="emoji-grid">
-                                        <?php foreach ($items as $item): ?>
-                                            <button type="button" class="emoji-option<?= (($user['emoji'] ?? '') === $item['emoji']) ? ' selected' : ''; ?>" data-emoji="<?= e($item['emoji']); ?>" title="<?= e($item['name']); ?>" aria-label="<?= e($item['name']); ?>"><?= e($item['emoji']); ?></button>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endforeach; ?>
-                </fieldset>
+                <?php emojiPicker($emojiGroups, (string) ($user['emoji'] ?? '')); ?>
             </section>
         </div>
         <button type="submit">Profil speichern</button>
@@ -199,15 +181,4 @@ if (isset($_GET['saved'])): ?><div class="alert">Profil wurde gespeichert.</div>
     </form>
 </section>
 <?php endif; ?>
-<script>
-document.querySelectorAll('.emoji-option').forEach(function (button) {
-    button.addEventListener('click', function () {
-        document.querySelectorAll('.emoji-option.selected').forEach(function (selected) {
-            selected.classList.remove('selected');
-        });
-        button.classList.add('selected');
-        document.getElementById('selected-emoji').value = button.dataset.emoji;
-    });
-});
-</script>
 <?php pageFooter();

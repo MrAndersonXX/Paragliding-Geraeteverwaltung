@@ -58,9 +58,57 @@ function pageHeader(string $title): void
     <?php
 }
 
+/**
+ * Renders a compact popup emoji picker: categories as tabs, skin-tone variants
+ * are hidden behind the base emoji and only offered once that emoji is chosen.
+ */
+function emojiPicker(array $groups, string $selected, string $fieldName = 'emoji'): void
+{
+    $fieldId = 'selected-' . preg_replace('/[^a-z0-9_-]/i', '', $fieldName);
+    ?>
+    <div class="emoji-picker" data-emoji-picker>
+        <input type="hidden" name="<?= e($fieldName); ?>" id="<?= e($fieldId); ?>" value="<?= e($selected); ?>" required />
+        <button type="button" class="emoji-picker-trigger" data-emoji-trigger aria-haspopup="true" aria-expanded="false">
+            <span class="emoji-picker-preview" data-emoji-preview><?= e($selected !== '' ? $selected : '😀'); ?></span>
+            <span>Emoticon wählen</span>
+        </button>
+        <div class="emoji-popup" data-emoji-popup hidden>
+            <div class="emoji-popup-tabs" role="tablist">
+                <?php $first = true;
+                foreach ($groups as $groupName => $subgroups): ?>
+                    <button type="button" class="emoji-tab<?= $first ? ' active' : ''; ?>" data-emoji-tab="<?= e($groupName); ?>" role="tab"><?= e($groupName); ?></button>
+                    <?php $first = false;
+                endforeach; ?>
+            </div>
+            <div class="emoji-popup-body">
+                <?php $first = true;
+                foreach ($groups as $groupName => $subgroups): ?>
+                    <div class="emoji-tab-panel<?= $first ? ' active' : ''; ?>" data-emoji-panel="<?= e($groupName); ?>">
+                        <?php foreach ($subgroups as $subgroupName => $items): ?>
+                            <?php if (count($subgroups) > 1): ?><h4 class="emoji-subgroup-title"><?= e($subgroupName); ?></h4><?php endif; ?>
+                            <div class="emoji-grid">
+                                <?php foreach ($items as $item):
+                                    $variantEmojis = array_column($item['variants'], 'emoji');
+                                    $isSelected = $selected === $item['emoji'] || in_array($selected, $variantEmojis, true);
+                                    $swatches = $item['variants'] ? array_merge([['emoji' => $item['emoji'], 'name' => $item['name']]], $item['variants']) : [];
+                                    ?>
+                                    <button type="button" class="emoji-option<?= $isSelected ? ' selected' : ''; ?>" data-emoji="<?= e($item['emoji']); ?>" title="<?= e($item['name']); ?>" aria-label="<?= e($item['name']); ?>"<?= $swatches ? ' data-variants="' . e(json_encode($swatches, JSON_UNESCAPED_UNICODE)) . '"' : ''; ?>><?= e($item['emoji']); ?></button>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php $first = false;
+                endforeach; ?>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
 function pageFooter(): void
 {
     ?>
+    <script src="/assets/emoji-picker.js"></script>
     <script>
     document.querySelectorAll('form[data-confirm]').forEach(function (form) {
         form.addEventListener('submit', function (event) {

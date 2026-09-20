@@ -16,7 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $allowedKeys = ['hide_retired_equipment'];
 $key = (string) ($_POST['key'] ?? '');
-if (!in_array($key, $allowedKeys, true)) {
+$isAllowedConsentKey = preg_match('/^(consent_|approval_|share_)/', $key) === 1;
+if (!in_array($key, $allowedKeys, true) && !$isAllowedConsentKey) {
     http_response_code(400);
     echo json_encode(['error' => 'invalid_key']);
     exit;

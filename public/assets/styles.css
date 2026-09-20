@@ -801,39 +801,110 @@ tbody tr:hover {
 }
 
 .emoji-picker {
-    min-width: 0;
+    position: relative;
+    display: inline-block;
 }
 
-.emoji-group h3,
-.emoji-subgroup h4 {
-    color: #2c3d4f;
-    margin: 0.8rem 0 0.45rem;
+.emoji-picker-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f5f8fc;
+    border: 1px solid #d8e2ee;
+    color: #1c2430;
+    padding: 0.4rem 0.7rem;
+    border-radius: 6px;
 }
 
-.emoji-group h3 {
-    font-size: 1.05rem;
+.emoji-picker-preview {
+    font-size: 1.4rem;
+    line-height: 1;
 }
 
-.emoji-subgroup h4 {
-    font-size: 0.85rem;
+.emoji-popup {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 0.4rem);
+    left: 0;
+    width: 18rem;
+    max-height: 20rem;
+    background: #fff;
+    border: 1px solid #d8e2ee;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+    display: flex;
+    flex-direction: column;
+}
+
+.emoji-popup-tabs {
+    display: flex;
+    overflow-x: auto;
+    border-bottom: 1px solid #e3e9f2;
+    flex-shrink: 0;
+}
+
+.emoji-tab {
+    flex-shrink: 0;
+    background: transparent;
+    color: #56657a;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.75rem;
     font-weight: 600;
+    white-space: nowrap;
+}
+
+.emoji-tab:hover {
+    background: #f5f8fc;
+    color: #1c2430;
+}
+
+.emoji-tab.active {
+    color: #0f4c81;
+    border-bottom-color: #0f4c81;
+}
+
+.emoji-popup-body {
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+.emoji-tab-panel {
+    display: none;
+}
+
+.emoji-tab-panel.active {
+    display: block;
+}
+
+.emoji-subgroup-title {
+    color: #56657a;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 0.6rem 0 0.3rem;
+}
+
+.emoji-subgroup-title:first-child {
+    margin-top: 0;
 }
 
 .emoji-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(3rem, 1fr));
-    gap: 0.35rem;
+    grid-template-columns: repeat(auto-fill, minmax(2.1rem, 1fr));
+    gap: 0.25rem;
 }
 
 .emoji-option {
-    min-width: 3rem;
-    min-height: 3rem;
-    padding: 0.35rem;
+    min-width: 2.1rem;
+    min-height: 2.1rem;
+    padding: 0.2rem;
     background: #f5f8fc;
     border: 1px solid #d8e2ee;
     color: #1c2430;
-    font-size: 1.65rem;
+    font-size: 1.2rem;
     line-height: 1;
+    border-radius: 6px;
 }
 
 .emoji-option:hover,
@@ -841,6 +912,18 @@ tbody tr:hover {
     background: #dceeff;
     border-color: #0f4c81;
     box-shadow: 0 0 0 2px rgba(15, 76, 129, 0.18);
+}
+
+.emoji-variant-flyout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.35rem;
+    margin: 0.25rem 0 0.5rem;
+    background: #eef3f9;
+    border: 1px solid #d8e2ee;
+    border-radius: 6px;
+    grid-column: 1 / -1;
 }
 
 .action-form {

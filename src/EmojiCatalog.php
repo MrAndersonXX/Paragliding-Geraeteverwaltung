@@ -6,6 +6,10 @@ class EmojiCatalog
 {
     private const DATA_FILE = __DIR__ . '/../resources/emoji-test.txt';
 
+    /**
+     * Groups emoji by category/subcategory. Skin-tone variants are nested under
+     * the base emoji's 'variants' key instead of appearing as separate tiles.
+     */
     public static function grouped(): array
     {
         if (!is_file(self::DATA_FILE)) {
@@ -37,10 +41,33 @@ class EmojiCatalog
             if ($emoji === '' || $description === '') {
                 continue;
             }
-            $groups[$group][$subgroup][] = ['emoji' => $emoji, 'name' => $description];
+
+            $baseName = self::stripSkinTone($description);
+            $isVariant = $baseName !== $description;
+            $key = $isVariant ? $baseName : $description;
+
+            if ($isVariant && isset($groups[$group][$subgroup][$key])) {
+                $groups[$group][$subgroup][$key]['variants'][] = ['emoji' => $emoji, 'name' => $description];
+                continue;
+            }
+
+            $groups[$group][$subgroup][$key] = ['emoji' => $emoji, 'name' => $description, 'variants' => []];
+        }
+
+        foreach ($groups as $groupName => $subgroups) {
+            foreach ($subgroups as $subgroupName => $items) {
+                $groups[$groupName][$subgroupName] = array_values($items);
+            }
         }
 
         return $groups;
+    }
+
+    private static function stripSkinTone(string $description): string
+    {
+        $tone = '(?:light|medium-light|medium|medium-dark|dark) skin tone';
+        $pattern = '/:\s*' . $tone . '(?:\s*,\s*' . $tone . ')*\s*$/i';
+        return trim((string) preg_replace($pattern, '', $description));
     }
 
     private static function fromCodepoints(string $codepointList): string
@@ -74,6 +101,11 @@ class EmojiCatalog
                 foreach ($items as $item) {
                     if ($item['emoji'] === $emoji) {
                         return true;
+                    }
+                    foreach ($item['variants'] as $variant) {
+                        if ($variant['emoji'] === $emoji) {
+                            return true;
+                        }
                     }
                 }
             }

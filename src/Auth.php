@@ -78,6 +78,11 @@ class Auth
         return (bool) ($user['preferences'][$key] ?? $default);
     }
 
+    public static function consentGranted(string $key, bool $default = false): bool
+    {
+        return self::preference($key, $default);
+    }
+
     public static function setPreference(string $key, bool $value): void
     {
         $user = self::user();
@@ -87,11 +92,17 @@ class Auth
         $users = Storage::readUsers();
         foreach ($users as $index => $storedUser) {
             if ((int) ($storedUser['id'] ?? 0) === (int) $user['id']) {
+                $users[$index]['preferences'] = is_array($users[$index]['preferences'] ?? null) ? $users[$index]['preferences'] : [];
                 $users[$index]['preferences'][$key] = $value;
                 Storage::saveUsers($users);
                 return;
             }
         }
+    }
+
+    public static function grantConsent(string $key, bool $value = true): void
+    {
+        self::setPreference($key, $value);
     }
 
     /**
@@ -168,6 +179,10 @@ class Auth
             }
             if (empty($user['password_hash'])) {
                 $users[$index]['password_hash'] = password_hash(self::DEFAULT_PASSWORD, PASSWORD_DEFAULT);
+                $changed = true;
+            }
+            if (!is_array($users[$index]['preferences'] ?? null)) {
+                $users[$index]['preferences'] = [];
                 $changed = true;
             }
             if (($users[$index]['role'] ?? '') === 'admin') {

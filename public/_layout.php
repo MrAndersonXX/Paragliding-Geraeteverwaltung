@@ -39,8 +39,16 @@ function pageHeader(string $title): void
                 <a href="/categories.php">Dokumente</a>
                 <a href="/settings.php">Einstellungen</a>
             <?php endif; ?>
-            <a href="/logout.php">Abmelden</a>
         </nav>
+        <?php $currentUser = Auth::user(); ?>
+        <div class="sidebar-footer">
+            <a class="sidebar-user" href="/profile.php">
+                <span class="sidebar-user-emoji"><?= e($currentUser['emoji'] ?? '👤'); ?></span>
+                <span class="sidebar-user-name"><?= e(trim(($currentUser['first_name'] ?? '') . ' ' . ($currentUser['last_name'] ?? ''))); ?></span>
+                <span class="role-badge"><?= (($currentUser['role'] ?? 'admin') === 'admin') ? 'Administrator' : 'Benutzer'; ?></span>
+            </a>
+            <a href="/logout.php">Abmelden</a>
+        </div>
     </aside>
     <main class="container">
         <div class="page-heading">

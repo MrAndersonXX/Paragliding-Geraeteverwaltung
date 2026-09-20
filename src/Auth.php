@@ -94,6 +94,25 @@ class Auth
         }
     }
 
+    /**
+     * Merges the given fields into the currently logged-in user's stored record.
+     */
+    public static function updateCurrentUser(array $fields): void
+    {
+        $user = self::user();
+        if ($user === null) {
+            return;
+        }
+        $users = Storage::readUsers();
+        foreach ($users as $index => $storedUser) {
+            if ((int) ($storedUser['id'] ?? 0) === (int) $user['id']) {
+                $users[$index] = array_merge($storedUser, $fields);
+                Storage::saveUsers($users);
+                return;
+            }
+        }
+    }
+
     public static function login(string $email, string $password): bool
     {
         self::boot();

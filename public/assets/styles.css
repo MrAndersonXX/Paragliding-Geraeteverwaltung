@@ -37,6 +37,8 @@ body {
     color: white;
     padding: 1.5rem 1rem;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar-nav {
@@ -58,6 +60,61 @@ body {
 .sidebar-nav a:focus {
     background: #1c4568;
     color: white;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #1c4568;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.sidebar-footer a {
+    color: #dfeaf7;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.75rem 0.7rem;
+    border-radius: 6px;
+}
+
+.sidebar-footer a:hover,
+.sidebar-footer a:focus {
+    background: #1c4568;
+    color: white;
+}
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.sidebar-user-emoji {
+    font-size: 1.2rem;
+}
+
+.sidebar-user-name {
+    flex: 1 1 auto;
+}
+
+.role-badge {
+    background: #1c4568;
+    color: #dfeaf7;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+}
+
+.otp-input {
+    font-size: 1.4rem;
+    letter-spacing: 0.5rem;
+    text-align: center;
+    max-width: 12rem;
 }
 
 .container {

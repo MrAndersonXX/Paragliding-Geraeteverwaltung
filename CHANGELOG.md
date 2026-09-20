@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Added a permanent administrator audit log for business and technical changes, including the modifying user, timestamp, filters, and field-level change details.
+
 ### Changed
 - Simplified inspection planning to use the purchase date, actual inspection date, and next planned inspection date.
 - The inspection interval can be changed permanently when recording an actual inspection.

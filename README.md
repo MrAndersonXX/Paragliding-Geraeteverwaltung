@@ -53,6 +53,9 @@ Für jedes Gerät können erfasst werden:
 - Administratoren haben Zugriff auf alle Bereiche und Geräte.
 - Normale Benutzer sehen und bearbeiten nur ihre eigenen Geräte und können neue Geräte nur sich selbst zuweisen.
 - Der Loginstatus wird per HttpOnly-Cookie vier Wochen gespeichert und bei jedem Öffnen der Anwendung verlängert.
+- Administratoren können im Änderungsprotokoll alle fachlichen und technischen Änderungen nach Zeit, Benutzer, Bereich, Aktion und Ereignisart filtern.
+- Das Änderungsprotokoll wird dauerhaft geführt und enthält unter anderem Geräte, Prüfungen, Dokumente, Benutzer, Kategorien, Typen, Einstellungen sowie erfolgreiche An- und Abmeldungen.
+- Kennwörter, Passwort-Hashes, Remember-Token und SMTP-Benutzernamen werden im Änderungsprotokoll nicht gespeichert oder angezeigt.
 
 ### Prüfungslogik
 

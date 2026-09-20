@@ -38,6 +38,7 @@ function pageHeader(string $title): void
                 <a href="/users.php">Benutzer</a>
                 <a href="/categories.php">Dokumente</a>
                 <a href="/settings.php">Einstellungen</a>
+                <a href="/audit_log.php">Änderungsprotokoll</a>
             <?php endif; ?>
         </nav>
         <?php $currentUser = Auth::user(); ?>

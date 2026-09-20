@@ -76,6 +76,46 @@ body {
     padding: 1.5rem;
 }
 
+.card > h2,
+.edit-surface > h2 {
+    color: #102a43;
+    letter-spacing: -0.02em;
+}
+
+.edit-surface {
+    border-top: 4px solid #0f4c81;
+    padding: 1.75rem;
+}
+
+.edit-header {
+    align-items: flex-start;
+    border-bottom: 1px solid #e1e9f1;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+}
+
+.edit-header h2 {
+    margin: 0;
+}
+
+.edit-header .eyebrow {
+    margin-bottom: 0.25rem;
+}
+
+.button-secondary {
+    background: #eef3f8;
+    color: #24445e;
+}
+
+.button-secondary:hover,
+.button-secondary:focus {
+    background: #dce7f1;
+    color: #102a43;
+}
+
 .settings-summary {
     display: grid;
     grid-template-columns: minmax(10rem, 0.35fr) minmax(0, 1fr);
@@ -344,7 +384,7 @@ body {
 .stacked-form {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.15rem;
 }
 
 .row {
@@ -381,6 +421,23 @@ input, select, textarea, button {
     font: inherit;
 }
 
+input, select, textarea {
+    background: #fbfdff;
+    color: #1c2430;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    background: #fff;
+    border-color: #0f4c81;
+    box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.14);
+    outline: none;
+}
+
+.compact-field {
+    flex: 1 1 18rem;
+}
+
 button {
     background: #0f4c81;
     color: white;
@@ -399,9 +456,17 @@ textarea {
 }
 
 fieldset {
+    background: #f8fbfe;
     border: 1px solid #d8e2ee;
     border-radius: 8px;
     padding: 1rem;
+}
+
+legend {
+    color: #34495e;
+    font-size: 0.86rem;
+    font-weight: 700;
+    padding: 0 0.35rem;
 }
 
 .checkbox-row {
@@ -435,6 +500,10 @@ th, td {
 
 th {
     background: #f5f8fc;
+}
+
+tbody tr:hover {
+    background: #f8fbfe;
 }
 
 .inline-form {
@@ -581,6 +650,26 @@ th {
 }
 
 @media (max-width: 700px) {
+    .edit-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .edit-header .button-link {
+        align-self: flex-start;
+    }
+
+    .settings-summary,
+    .equipment-summary {
+        grid-template-columns: 1fr;
+        row-gap: 0.2rem;
+    }
+
+    .settings-summary dd,
+    .equipment-summary dd {
+        margin-bottom: 0.7rem;
+    }
+
     .sidebar {
         position: static;
         width: 100%;

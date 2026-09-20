@@ -76,8 +76,8 @@ if (isset($_GET['saved'])): ?><div class="alert">Benutzer wurde gespeichert.</di
 <section class="card">
     <div class="list-toolbar"><div><h2>Benutzerverwaltung</h2><p>Benutzer werden für Gerätezuordnung und Prüfungsbenachrichtigungen verwendet.</p></div><a class="button-link" href="/users.php?new=1">Neuer Benutzer</a></div>
 </section>
-<?php if ($showForm): ?><section class="card">
-    <h2><?= $editUser ? 'Benutzer bearbeiten' : 'Neuen Benutzer anlegen'; ?></h2>
+<?php if ($showForm): ?><section class="card edit-surface">
+    <div class="edit-header"><div><p class="eyebrow">Benutzerverwaltung</p><h2><?= $editUser ? 'Benutzer bearbeiten' : 'Neuen Benutzer anlegen'; ?></h2></div><a class="button-link button-secondary" href="/users.php">Abbrechen</a></div>
     <form method="post" class="stacked-form">
         <input type="hidden" name="id" value="<?= e($editUser['id'] ?? ''); ?>" />
         <div class="row two-col"><label>Vorname<input type="text" name="first_name" value="<?= e($editUser['first_name'] ?? ''); ?>" required /></label><label>Nachname<input type="text" name="last_name" value="<?= e($editUser['last_name'] ?? ''); ?>" required /></label></div>
@@ -91,7 +91,7 @@ if (isset($_GET['saved'])): ?><div class="alert">Benutzer wurde gespeichert.</di
 </section><?php endif; ?>
 <section class="card"><h2>Benutzerliste</h2><div class="table-wrap"><table><thead><tr><th>Emoticon</th><th>Vorname</th><th>Nachname</th><th>E-Mail-Adresse</th><th>Rolle</th><th>Aktion</th></tr></thead><tbody>
 <?php if (!$users): ?><tr><td colspan="6">Noch keine Benutzer erfasst.</td></tr><?php endif; ?>
-<?php foreach ($users as $user): ?><tr><td class="emoji-cell"><?= e($user['emoji'] ?? ''); ?></td><td><?= e($user['first_name'] ?? ''); ?></td><td><?= e($user['last_name'] ?? ''); ?></td><td><?= e($user['email'] ?? ''); ?></td><td><?= ($user['role'] ?? 'admin') === 'admin' ? 'Administrator' : 'Benutzer'; ?></td><td><a class="button-link" href="/users.php?edit=<?= (int) ($user['id'] ?? 0); ?>">Edit</a></td></tr><?php endforeach; ?>
+<?php foreach ($users as $user): ?><tr><td class="emoji-cell"><?= e($user['emoji'] ?? ''); ?></td><td><?= e($user['first_name'] ?? ''); ?></td><td><?= e($user['last_name'] ?? ''); ?></td><td><?= e($user['email'] ?? ''); ?></td><td><?= ($user['role'] ?? 'admin') === 'admin' ? 'Administrator' : 'Benutzer'; ?></td><td><a class="button-link" href="/users.php?edit=<?= (int) ($user['id'] ?? 0); ?>">Bearbeiten</a></td></tr><?php endforeach; ?>
 </tbody></table></div></section>
 <script>
 document.querySelectorAll('.emoji-option').forEach(function (button) {

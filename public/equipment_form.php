@@ -114,8 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Gerätedetails');
 ?>
 <?php if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif; ?>
-<section class="card">
-    <div class="section-actions"><a class="button-link" href="/equipment_list.php">Zur Geräteliste</a></div>
+<section class="card edit-surface">
+    <div class="edit-header"><div><p class="eyebrow">Geräteverwaltung</p><h2><?= $editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Gerätedetails'; ?></h2></div><a class="button-link button-secondary" href="/equipment_list.php">Zur Geräteliste</a></div>
 <?php if ($editMode): ?><form method="post" class="stacked-form" data-edit-form>
         <input type="hidden" name="id" value="<?= e($editItem['id'] ?? ''); ?>" />
         <input type="hidden" name="return_to" value="" />

@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 pageHeader('Einstellungen');
 if ($message !== ''): ?><div class="<?= e($messageClass ?? 'alert'); ?>"><?= e($message); ?></div><?php endif; ?>
-<section class="card"><h2>Anwendung</h2><form method="post" class="stacked-form"<?= $editMode ? ' data-edit-form' : ''; ?>>
+<section class="card edit-surface"><div class="edit-header"><div><p class="eyebrow">Systemverwaltung</p><h2>Anwendung &amp; Mailversand</h2></div><?php if ($editMode): ?><a class="button-link button-secondary" href="/settings.php">Abbrechen</a><?php endif; ?></div><form method="post" class="stacked-form"<?= $editMode ? ' data-edit-form' : ''; ?>>
 <?php if ($editMode): ?><input type="hidden" name="return_to" value="" /><?php endif; ?>
 <?php if (!$editMode): ?>
     <dl class="settings-summary"><dt>Anwendungsname</dt><dd><?= e($settings['app']['name'] ?? 'Glider Equipment Tracker'); ?></dd><dt>Zeitzone</dt><dd><?= e($settings['app']['timezone'] ?? 'Europe/Berlin'); ?></dd><dt>SMTP Host</dt><dd><?= e($settings['mail']['host'] ?? 'Nicht konfiguriert'); ?></dd><dt>SMTP Port</dt><dd><?= e($settings['mail']['port'] ?? '587'); ?></dd><dt>SMTP Benutzername</dt><dd><?= e($settings['mail']['username'] ?? 'Nicht konfiguriert'); ?></dd><dt>Verschlüsselung</dt><dd><?= e($settings['mail']['encryption'] ?? 'tls'); ?></dd><dt>Absenderadresse</dt><dd><?= e($settings['mail']['from_address'] ?? 'Nicht konfiguriert'); ?></dd><dt>Absendername</dt><dd><?= e($settings['mail']['from_name'] ?? 'Glider Equipment Tracker'); ?></dd></dl>
@@ -61,7 +61,6 @@ if ($message !== ''): ?><div class="<?= e($messageClass ?? 'alert'); ?>"><?= e($
     <div class="row two-col"><label>Absenderadresse<input type="email" name="mail_from_address" value="<?= e($settings['mail']['from_address'] ?? ''); ?>" /></label><label>Absendername<input type="text" name="mail_from_name" value="<?= e($settings['mail']['from_name'] ?? 'Glider Equipment Tracker'); ?>" /></label></div>
     <div class="button-row"><button type="submit" name="action" value="save_settings">Einstellungen speichern</button><button type="submit" name="action" value="test_smtp">SMTP-Verbindung testen</button></div>
     <div class="inline-form"><input type="email" name="test_email_to" placeholder="Empfänger der Test-E-Mail" /><button type="submit" name="action" value="send_test_email">Test-E-Mail senden</button></div>
-    <a class="button-link" href="/settings.php">Abbrechen</a>
 <?php endif; ?>
 </form></section>
 <?php pageFooter();

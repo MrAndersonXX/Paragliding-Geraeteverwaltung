@@ -182,10 +182,10 @@ class Storage
         foreach ($itemsById as $id => $item) {
             $previous = $previousById[$id] ?? [];
             $isNew = !array_key_exists($id, $previousById);
-            $eventType = $domain === 'user' && !$isNew && self::isTechnicalUserChange($previous, $item) ? 'technical' : 'business';
-            $eventDomain = $eventType === 'technical' ? 'authentication' : $domain;
-            $entityLabel = $eventType === 'technical' ? 'Anmeldesitzung: ' . $label($item) : $label($item);
-            AuditLog::record($eventType, $eventDomain, $isNew ? 'created' : 'updated', (int) $id, $entityLabel, $previous, $item);
+            if ($domain === 'user' && !$isNew && self::isRememberTokenMaintenance($previous, $item)) {
+                continue;
+            }
+            AuditLog::record('business', $domain, $isNew ? 'created' : 'updated', (int) $id, $label($item), $previous, $item);
         }
 
         foreach ($previousById as $id => $previous) {
@@ -207,7 +207,7 @@ class Storage
         return $indexed;
     }
 
-    private static function isTechnicalUserChange(array $before, array $after): bool
+    private static function isRememberTokenMaintenance(array $before, array $after): bool
     {
         $technicalFields = ['remember_token_hash', 'remember_expires_at'];
         foreach (array_unique([...array_keys($before), ...array_keys($after)]) as $field) {

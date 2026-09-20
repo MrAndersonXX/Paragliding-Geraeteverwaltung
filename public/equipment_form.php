@@ -186,6 +186,18 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
         <input type="hidden" name="return_to" value="" />
         <input type="hidden" name="last_inspection_date" value="<?= e($editItem['last_inspection_date'] ?? ''); ?>" />
         <div class="form-sections">
+        <?php if ($editItem !== null): ?>
+            <section class="form-section equipment-photo-section">
+                <button type="button" class="equipment-photo-button" data-open-image-picker data-equipment-id="<?= (int) $editItem['id']; ?>" aria-label="Artikelbild ändern">
+                    <?php if (($editItem['image_file'] ?? '') !== ''): ?>
+                        <img class="equipment-photo" src="/equipment_image.php?id=<?= (int) $editItem['id']; ?>" alt="Artikelbild <?= e($editItem['name'] ?? ''); ?>" />
+                    <?php else: ?>
+                        <span class="equipment-photo equipment-photo-placeholder">Kein Bild vorhanden</span>
+                    <?php endif; ?>
+                </button>
+                <span class="info-field" tabindex="0" aria-label="Information zum Artikelbild">i<span class="info-explanation" role="tooltip">Klicke auf das Bild, um ein anderes Artikelbild auszuwählen.</span></span>
+            </section>
+        <?php endif; ?>
         <section class="form-section"><h3>Gerät</h3>
         <div class="row two-col">
             <label><span class="field-label">Gerätename</span><input type="text" name="name" value="<?= e($editItem['name'] ?? ''); ?>" required /></label>
@@ -200,18 +212,6 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
             <label><span class="field-label">Anschaffungsdatum</span><input type="date" name="purchase_date" value="<?= e($editItem['purchase_date'] ?? ''); ?>" required /></label>
             <label><span class="field-label">Status</span><select name="status"><option value="active" <?= (($editItem['status'] ?? 'active') === 'active') ? 'selected' : ''; ?>>aktiv</option><option value="inspection" <?= (($editItem['status'] ?? '') === 'inspection') ? 'selected' : ''; ?>>in Prüfung</option><option value="retired" <?= (($editItem['status'] ?? '') === 'retired') ? 'selected' : ''; ?>>ausgemustert</option></select></label>
         </div>
-        <?php if ($editItem !== null): ?>
-            <div class="equipment-photo-section">
-                <button type="button" class="equipment-photo-button" data-open-image-picker data-equipment-id="<?= (int) $editItem['id']; ?>" aria-label="Artikelbild ändern">
-                    <?php if (($editItem['image_file'] ?? '') !== ''): ?>
-                        <img class="equipment-photo" src="/equipment_image.php?id=<?= (int) $editItem['id']; ?>" alt="Artikelbild <?= e($editItem['name'] ?? ''); ?>" />
-                    <?php else: ?>
-                        <span class="equipment-photo equipment-photo-placeholder">Kein Bild vorhanden</span>
-                    <?php endif; ?>
-                </button>
-                <span class="info-field" tabindex="0" aria-label="Information zum Artikelbild">i<span class="info-explanation" role="tooltip">Klicke auf das Bild, um ein anderes Artikelbild auszuwählen.</span></span>
-            </div>
-        <?php endif; ?>
         </section>
         <section class="form-section"><h3>Zuordnung &amp; Status</h3>
         <div class="row stacked-fields">
@@ -220,7 +220,7 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
             <label><span class="field-label">Prüfungsintervall in Monaten</span><input type="number" name="inspection_interval_months" min="1" value="<?= e($editItem['inspection_interval_months'] ?? '12'); ?>" required /></label>
         </div>
         </section>
-        <section class="form-section"><h3>Prüfungsplanung</h3>
+        <section class="form-section"><h3>Prüfungen</h3>
         <div class="row three-col">
             <div class="field-readonly"><span class="field-label">Letzte tatsächliche Prüfung</span><span><?= e($editItem['last_inspection_date'] ?? 'Noch keine Prüfung erfasst'); ?></span></div>
             <label><span class="field-label">Nächste geplante Prüfung <span class="info-field" tabindex="0" aria-label="Information zur Berechnung">i<span class="info-explanation" role="tooltip">Wird aus der letzten tatsächlichen Prüfung und dem Prüfungsintervall berechnet. Ohne Prüfung wird das Anschaffungsdatum verwendet.</span></span></span><input type="date" name="next_inspection_date" value="<?= e($editItem['next_inspection_date'] ?? ''); ?>" readonly /></label>
@@ -245,7 +245,7 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
             <label><input type="checkbox" name="notification_due" value="1" <?= !empty($editItem['notifications']['due']) || !$editItem ? 'checked' : ''; ?> /> überfällig</label>
             <label><input type="checkbox" name="notification_retired" value="1" <?= !empty($editItem['notifications']['retired']) ? 'checked' : ''; ?> /> Ausmusterung</label>
         </div></fieldset>
-        <button type="submit"><?= $editItem ? 'Änderungen speichern' : 'Gerät speichern'; ?></button>
+        <button type="submit"><?= $editItem ? 'Gerät speichern' : 'Gerät anlegen'; ?></button>
     </form>
 <?php else: ?>
     <div class="detail-sections">

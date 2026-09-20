@@ -124,9 +124,9 @@ body {
 }
 
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    margin-left: 230px;
+    width: min(1200px, calc(100% - 230px));
+    margin: 0 0 0 230px;
+    min-width: 0;
     padding: 0 1rem 3rem;
     display: grid;
     gap: 1.5rem;
@@ -136,6 +136,7 @@ body {
     background: white;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(16, 42, 67, 0.08);
+    min-width: 0;
     padding: 1.5rem;
 }
 
@@ -630,6 +631,12 @@ body {
     gap: 1rem;
 }
 
+.row > label,
+.row > .field-readonly {
+    align-self: stretch;
+    justify-content: flex-end;
+}
+
 .form-section > .row + .row {
     margin-top: 1rem;
 }
@@ -695,6 +702,7 @@ input:not([type="checkbox"]):not([type="radio"]),
 select,
 button {
     min-height: 2.85rem;
+    height: 2.85rem;
 }
 
 input:focus, select:focus, textarea:focus {
@@ -735,6 +743,7 @@ fieldset {
     background: #f8fbfe;
     border: 1px solid #d8e2ee;
     border-radius: 8px;
+    min-width: 0;
     padding: 1rem;
 }
 
@@ -760,6 +769,8 @@ legend {
 }
 
 .table-wrap {
+    max-width: 100%;
+    min-width: 0;
     overflow-x: auto;
 }
 
@@ -1155,6 +1166,7 @@ tbody tr:hover {
 
     .container {
         margin-left: 0;
+        width: 100%;
         padding: 1rem 0.75rem 2rem;
     }
 
@@ -1168,6 +1180,13 @@ tbody tr:hover {
     .calendar-legend {
         padding-left: 1.25rem;
         padding-right: 1.25rem;
+    }
+}
+
+@media (max-width: 1050px) {
+    .detail-sections,
+    .form-sections {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -1246,6 +1265,7 @@ tbody tr:hover {
 
     .container {
         margin-left: 0;
+        width: 100%;
         padding-top: 1.25rem;
     }
 }

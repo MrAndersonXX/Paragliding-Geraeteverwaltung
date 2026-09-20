@@ -26,6 +26,15 @@ Die Anwendung ist bewusst leichtgewichtig aufgebaut und für Synology DSM 7.x op
 - MariaDB-Container
 - Redis-Container
 
+## Layout-Prüfung
+
+Jede Änderung an sichtbaren Inhalten, Formularen, Tabellen oder Navigation muss vor dem Merge in Desktop- und Mobilansicht geprüft werden. Dabei müssen insbesondere diese Regeln eingehalten werden:
+
+- Gleichartige Eingabefelder haben dieselbe Höhe und bleiben innerhalb ihres Containers.
+- Feldüberschriften stehen direkt und mit einheitlichem Abstand über ihrem Feld.
+- Texte, Hinweis-Symbole und Bedienelemente dürfen weder überlappen noch horizontal über den Viewport hinausragen.
+- Mehrspaltige Raster wechseln auf kleinen Bildschirmen in eine lesbare einspaltige Darstellung.
+
 ## Funktionsumfang
 
 ### Geräteverwaltung

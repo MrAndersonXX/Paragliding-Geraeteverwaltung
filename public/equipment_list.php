@@ -3,6 +3,7 @@
 require __DIR__ . '/_layout.php';
 
 use Glider\Storage;
+use Glider\Auth;
 
 Storage::ensure();
 $allEquipment = Storage::readEquipment();
@@ -13,19 +14,18 @@ foreach ($users as $user) {
     $usersById[(int) ($user['id'] ?? 0)] = $user;
 }
 $message = isset($_GET['saved']) ? 'Gerät wurde gespeichert.' : '';
-use Glider\Auth;
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'archive_equipment') {
 $currentUser = Auth::user();
 $isAdmin = Auth::isAdmin();
 if (!$isAdmin) {
     $equipment = array_values(array_filter($equipment, static fn ($item) => (int) ($item['user_id'] ?? 0) === (int) ($currentUser['id'] ?? 0)));
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'archive_equipment') {
     $id = (int) ($_POST['id'] ?? 0);
     foreach ($allEquipment as $index => $existing) {
         if ((int) ($existing['id'] ?? 0) === $id && ($isAdmin || (int) ($existing['user_id'] ?? 0) === (int) ($currentUser['id'] ?? 0))) {
-            $equipment[$index]['status'] = 'retired';
-            $equipment[$index]['retired_at'] = date('Y-m-d');
+            $allEquipment[$index]['status'] = 'retired';
+            $allEquipment[$index]['retired_at'] = date('Y-m-d');
             break;
         }
     }

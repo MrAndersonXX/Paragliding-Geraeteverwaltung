@@ -9,6 +9,7 @@ use Glider\InspectionCalculator;
 use Glider\EquipmentTimeline;
 use Glider\Auth;
 
+Auth::requireActiveAccount();
 Storage::ensure();
 $equipment = Storage::readEquipment();
 $documents = Storage::readEquipmentDocuments();

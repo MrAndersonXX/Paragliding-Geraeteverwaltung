@@ -4,56 +4,92 @@ namespace Glider;
 
 class ImageSearchService
 {
-    private const ENDPOINT = 'https://www.googleapis.com/customsearch/v1';
+    private const ENDPOINT = 'https://api.openverse.org/v1/images/';
     private const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
     private const MAX_BYTES = 8 * 1024 * 1024;
-    private const CONTEXT_TERMS = 'Gleitschirm Paragliding Ausrüstung';
+    private const CONTEXT_TERM = 'paraglider';
 
     /**
+     * Uses Openverse (openverse.org), a key-free API for openly licensed images, to find candidate photos.
+     *
      * @return array<int, array{title: string, thumbnail: string, link: string, contextLink: string}>
      */
     public static function searchImages(string $manufacturer, string $name, array $imageSearchConfig, int $limit = 8): array
     {
-        $apiKey = trim((string) ($imageSearchConfig['api_key'] ?? ''));
-        $cseId = trim((string) ($imageSearchConfig['cse_id'] ?? ''));
-        if (empty($imageSearchConfig['enabled']) || $apiKey === '' || $cseId === '') {
+        if (empty($imageSearchConfig['enabled'])) {
             return [];
         }
 
-        $query = self::buildQuery($manufacturer, $name);
+        $manufacturer = self::sanitizeSearchTerm($manufacturer);
+        $name = self::sanitizeSearchTerm($name);
+
+        // Try the exact model first, then fall back to broader queries so a manufacturer-level
+        // image is still found when no photo of the specific model/size is openly licensed.
+        foreach (self::candidateQueries($manufacturer, $name) as $query) {
+            $results = self::fetchResults($query, $limit);
+            if ($results !== []) {
+                return $results;
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private static function candidateQueries(string $manufacturer, string $name): array
+    {
+        $queries = [];
+        if ($manufacturer !== '' && $name !== '') {
+            $queries[] = mb_substr("$manufacturer $name " . self::CONTEXT_TERM, 0, 120);
+            $firstWordOfName = strtok($name, ' ');
+            if ($firstWordOfName !== false && $firstWordOfName !== $name) {
+                $queries[] = mb_substr("$manufacturer $firstWordOfName " . self::CONTEXT_TERM, 0, 120);
+            }
+        }
+        $subject = trim($manufacturer !== '' ? $manufacturer : $name);
+        if ($subject !== '') {
+            $queries[] = mb_substr("$subject " . self::CONTEXT_TERM, 0, 120);
+        }
+        return array_values(array_unique($queries));
+    }
+
+    /**
+     * @return array<int, array{title: string, thumbnail: string, link: string, contextLink: string}>
+     */
+    private static function fetchResults(string $query, int $limit): array
+    {
         if ($query === '') {
             return [];
         }
 
         $params = [
-            'key' => $apiKey,
-            'cx' => $cseId,
             'q' => $query,
-            'searchType' => 'image',
-            'safe' => 'high',
-            'imgType' => 'photo',
-            'num' => (string) max(1, min($limit, 10)),
+            'page_size' => (string) max(1, min($limit, 20)),
+            // Openverse excludes results flagged as sensitive/mature by default.
+            'mature' => 'false',
         ];
 
         $response = self::curlGetJson(self::ENDPOINT . '?' . http_build_query($params));
-        if ($response === null || !isset($response['items']) || !is_array($response['items'])) {
+        if ($response === null || !isset($response['results']) || !is_array($response['results'])) {
             return [];
         }
 
         $results = [];
-        foreach ($response['items'] as $item) {
-            if (!is_array($item)) {
+        foreach ($response['results'] as $item) {
+            if (!is_array($item) || !empty($item['mature'])) {
                 continue;
             }
-            $link = (string) ($item['link'] ?? '');
+            $link = (string) ($item['url'] ?? '');
             if (!self::isHttpsUrl($link)) {
                 continue;
             }
             $results[] = [
                 'title' => trim((string) ($item['title'] ?? '')),
-                'thumbnail' => (string) ($item['image']['thumbnailLink'] ?? $link),
+                'thumbnail' => (string) ($item['thumbnail'] ?? $link),
                 'link' => $link,
-                'contextLink' => (string) ($item['image']['contextLink'] ?? ''),
+                'contextLink' => (string) ($item['foreign_landing_url'] ?? ''),
             ];
         }
 
@@ -127,18 +163,6 @@ class ImageSearchService
             'size' => $downloadedBytes,
             'extension' => self::extensionForMime($mime),
         ];
-    }
-
-    private static function buildQuery(string $manufacturer, string $name): string
-    {
-        $manufacturer = self::sanitizeSearchTerm($manufacturer);
-        $name = self::sanitizeSearchTerm($name);
-        $subject = trim($manufacturer . ' ' . $name);
-        if ($subject === '') {
-            return '';
-        }
-
-        return mb_substr($subject . ' ' . self::CONTEXT_TERMS, 0, 120);
     }
 
     private static function sanitizeSearchTerm(string $term): string

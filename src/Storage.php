@@ -187,8 +187,6 @@ class Storage
             ],
             'image_search' => [
                 'enabled' => false,
-                'api_key' => '',
-                'cse_id' => '',
             ],
         ]);
         return is_array($settings) ? $settings : [];

@@ -19,7 +19,7 @@ foreach ($equipment as $existing) {
         break;
     }
 }
-$message = '';
+$message = isset($_GET['saved']) ? 'Gerät wurde gespeichert.' : '';
 $formEquipmentType = '';
 $currentUser = Auth::user();
 $isAdmin = Auth::isAdmin();
@@ -31,6 +31,22 @@ if (!$isAdmin && $editItem !== null && (int) ($editItem['user_id'] ?? 0) !== (in
     exit('Zugriff verweigert.');
 }
 $assignedEquipmentId = 0;
+$assignedEquipmentName = 'Nicht zugeordnet';
+$assignedUserName = 'Nicht zugeordnet';
+if ($editItem !== null) {
+    foreach ($equipment as $relatedEquipment) {
+        if ((int) ($relatedEquipment['id'] ?? 0) === (int) ($editItem['assigned_equipment_id'] ?? 0)) {
+            $assignedEquipmentName = trim((string) ($relatedEquipment['name'] ?? '')) ?: 'Nicht zugeordnet';
+            break;
+        }
+    }
+    foreach ($users as $user) {
+        if ((int) ($user['id'] ?? 0) === (int) ($editItem['user_id'] ?? 0)) {
+            $assignedUserName = trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
+            break;
+        }
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = isset($_POST['id']) && $_POST['id'] !== '' ? (int) $_POST['id'] : 0;
@@ -104,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Storage::saveEquipment($equipment);
         $returnTo = (string) ($_POST['return_to'] ?? '');
         if (!str_starts_with($returnTo, '/') || str_starts_with($returnTo, '//')) {
-            $returnTo = '/equipment_list.php?saved=1';
+            $returnTo = '/equipment_form.php?id=' . $id . '&saved=1';
         }
         header('Location: ' . $returnTo);
         exit;
@@ -161,20 +177,12 @@ pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Ger
         <button type="submit"><?= $editItem ? 'Änderungen speichern' : 'Gerät speichern'; ?></button>
     </form>
 <?php else: ?>
-    <dl class="equipment-summary">
-        <dt>Gerätename</dt><dd><?= e($editItem['name'] ?? ''); ?></dd>
-        <dt>Gerätetyp</dt><dd><?= e($editItem['equipment_type'] ?? $editItem['category'] ?? ''); ?></dd>
-        <dt>Hersteller</dt><dd><?= e($editItem['manufacturer'] ?? ''); ?></dd>
-        <dt>Größe</dt><dd><?= e($editItem['size'] ?? ''); ?></dd>
-        <dt>Seriennummer</dt><dd><?= e($editItem['serial_number'] ?? ''); ?></dd>
-        <dt>Anschaffungsdatum</dt><dd><?= e($editItem['purchase_date'] ?? ''); ?></dd>
-        <dt>Status</dt><dd><?= e($editItem['status'] ?? 'active'); ?></dd>
-        <dt>Prüfungsintervall</dt><dd><?= (int) ($editItem['inspection_interval_days'] ?? 0); ?> Tage</dd>
-        <dt>Letzte Prüfung</dt><dd><?= e($editItem['last_inspection_date'] ?? ''); ?></dd>
-        <dt>Nächste Prüfung</dt><dd><?= e($editItem['next_inspection_date'] ?? ''); ?></dd>
-        <dt>Hersteller-Nachprüfung</dt><dd><?= e($editItem['manufacturer_check_date'] ?? ''); ?></dd>
-        <dt>Notiz</dt><dd><?= e($editItem['notes'] ?? ''); ?></dd>
-    </dl>
+    <div class="detail-sections">
+        <section class="detail-section"><h3>Gerät</h3><dl class="equipment-summary"><dt>Gerätename</dt><dd><?= e($editItem['name'] ?? ''); ?></dd><dt>Gerätetyp</dt><dd><?= e($editItem['equipment_type'] ?? $editItem['category'] ?? ''); ?></dd><dt>Hersteller</dt><dd><?= e($editItem['manufacturer'] ?? ''); ?></dd><dt>Größe</dt><dd><?= e($editItem['size'] ?? ''); ?></dd><dt>Seriennummer</dt><dd><?= e($editItem['serial_number'] ?? ''); ?></dd><dt>Anschaffungsdatum</dt><dd><?= e($editItem['purchase_date'] ?? ''); ?></dd></dl></section>
+        <section class="detail-section"><h3>Zuordnung &amp; Status</h3><dl class="equipment-summary"><dt>Zugeordnetes Gerät</dt><dd><?= e($assignedEquipmentName); ?></dd><dt>Benutzer</dt><dd><?= e($assignedUserName); ?></dd><dt>Status</dt><dd><?= e($editItem['status'] ?? 'active'); ?></dd><dt>Ausmusterungsdatum</dt><dd><?= e($editItem['retired_at'] ?? ''); ?></dd></dl></section>
+        <section class="detail-section"><h3>Prüfungen</h3><dl class="equipment-summary"><dt>Prüfungsintervall</dt><dd><?= (int) ($editItem['inspection_interval_days'] ?? 0); ?> Tage</dd><dt>Beginn Prüfungsdatum</dt><dd><?= e($editItem['inspection_start_date'] ?? ''); ?></dd><dt>Letzte Prüfung</dt><dd><?= e($editItem['last_inspection_date'] ?? ''); ?></dd><dt>Nächste Prüfung</dt><dd><?= e($editItem['next_inspection_date'] ?? ''); ?></dd></dl></section>
+        <section class="detail-section"><h3>Hersteller &amp; Notizen</h3><dl class="equipment-summary"><dt>Hersteller-Nachprüfung</dt><dd><?= e($editItem['manufacturer_check_date'] ?? ''); ?></dd><dt>Gültigkeit</dt><dd><?= (int) ($editItem['manufacturer_validity_days'] ?? 0); ?> Tage</dd><dt>Max. Betriebsdauer</dt><dd><?= (int) ($editItem['max_operating_days'] ?? 0); ?> Tage</dd><dt>Notiz</dt><dd><?= e($editItem['notes'] ?? ''); ?></dd></dl></section>
+    </div>
     <div class="button-row"><a class="button-link" href="/equipment_form.php?id=<?= (int) $editItem['id']; ?>&edit=1">Bearbeiten</a><?php if (($editItem['status'] ?? 'active') !== 'retired'): ?><form method="post" class="action-form"><input type="hidden" name="action" value="archive_equipment" /><input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" /><button type="submit" class="button-muted">Archivieren</button></form><?php endif; ?></div>
 <?php endif; ?>
 </section>

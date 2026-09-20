@@ -99,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'size' => trim((string) ($_POST['size'] ?? '')),
         'serial_number' => trim((string) ($_POST['serial_number'] ?? '')),
         'purchase_date' => trim((string) ($_POST['purchase_date'] ?? '')),
+        'last_inspection_date' => trim((string) ($_POST['last_inspection_date'] ?? '')),
         'user_id' => $submittedUserId,
         'status' => trim((string) ($_POST['status'] ?? 'active')),
         'inspection_interval_months' => (int) ($_POST['inspection_interval_months'] ?? 0),

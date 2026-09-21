@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Changed
+- Updated the Docker publishing workflow to Node-24-compatible GitHub Actions.
 - Refined the application-wide visual design with consistent typography, spacing, control sizes, cards and responsive layouts.
 
 ### Added

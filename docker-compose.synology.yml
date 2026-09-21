@@ -1,34 +1,24 @@
-# Synology DS920+ / Container Manager deployment.
+# Synology / Dockhand deployment.
 #
-# Builds both images directly from the GitHub repository's main branch. The
-# Synology needs internet access to GitHub, Composer, and unicode.org during
-# the build. Only the persistent data (JSON records, uploaded documents,
-# equipment images) lives in a named Docker volume managed by Docker.
-#
-# This requires a recent Docker Compose / BuildKit version that supports Git
-# URLs as build contexts. For older Container Manager versions, use
-# docker-compose.synology.build.yml with a local repository checkout instead.
+# Pulls pre-built app and nginx images from GitHub Container Registry. The NAS
+# only needs this Compose file and the ./data folder. All mutable application
+# data is stored below ./data and mounted into the app as /var/www/html/storage.
 services:
   app:
-    build:
-      context: "https://github.com/MrAndersonXX/Paragliding-Geraeteverwaltung.git#main"
-      dockerfile: docker/php/Dockerfile
+    image: ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-app:latest
+    pull_policy: always
     restart: unless-stopped
     working_dir: /var/www/html
     environment:
       TZ: Europe/Berlin
     volumes:
-      - glider_storage:/var/www/html/storage
+      - ./data:/var/www/html/storage
 
   nginx:
-    build:
-      context: "https://github.com/MrAndersonXX/Paragliding-Geraeteverwaltung.git#main"
-      dockerfile: docker/nginx/Dockerfile
+    image: ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-nginx:latest
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "8282:80"
     depends_on:
       - app
-
-volumes:
-  glider_storage:

@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Synology/Dockhand deployment now pulls GHCR images and persists mutable data in a visible `./data` folder, so the NAS project directory only needs `docker-compose.yml` and `data`.
+
 ## [0.7.0] - 2026-09-20
 
 ### Changed

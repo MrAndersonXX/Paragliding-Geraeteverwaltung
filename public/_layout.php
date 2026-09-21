@@ -57,14 +57,14 @@ function pageHeader(string $title): void
                 <span class="role-badge"><?= e((($currentUser['role'] ?? 'admin') === 'admin') ? __('nav.administrator') : __('nav.user')); ?></span>
             </a>
             <details class="language-switcher">
-                <summary aria-label="<?= e(__('language.choose')); ?>" title="<?= e(__('language.choose')); ?>"><span aria-hidden="true"><?= e(I18n::locales()[$locale]['flag']); ?></span></summary>
+                <summary aria-label="<?= e(__('language.choose')); ?>" title="<?= e(__('language.choose')); ?>"><img src="<?= e(I18n::locales()[$locale]['flag']); ?>" alt="" /></summary>
                 <div class="language-options">
                     <?php foreach (I18n::locales() as $language => $languageInfo): ?>
                         <?php if ($language === $locale) { continue; } ?>
                         <form method="post" action="/language.php">
                             <input type="hidden" name="language" value="<?= e($language); ?>" />
                             <input type="hidden" name="redirect" value="<?= e($_SERVER['REQUEST_URI'] ?? '/'); ?>" />
-                            <button type="submit" class="language-option" aria-label="<?= e($languageInfo['label']); ?>" title="<?= e($languageInfo['label']); ?>"><span aria-hidden="true"><?= e($languageInfo['flag']); ?></span></button>
+                            <button type="submit" class="language-option" aria-label="<?= e($languageInfo['label']); ?>" title="<?= e($languageInfo['label']); ?>"><img src="<?= e($languageInfo['flag']); ?>" alt="" /></button>
                         </form>
                     <?php endforeach; ?>
                 </div>

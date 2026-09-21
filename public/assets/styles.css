@@ -116,6 +116,13 @@ body {
     display: none;
 }
 
+.language-switcher img {
+    display: block;
+    height: 1.2rem;
+    object-fit: cover;
+    width: 1.8rem;
+}
+
 .language-switcher summary:hover,
 .language-switcher summary:focus-visible,
 .language-switcher[open] summary {

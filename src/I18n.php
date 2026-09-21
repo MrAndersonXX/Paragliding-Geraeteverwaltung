@@ -8,8 +8,8 @@ class I18n
     public const COOKIE_NAME = 'glider_language';
 
     private const LOCALES = [
-        'de' => ['label' => 'Deutsch', 'flag' => '🇩🇪'],
-        'en-GB' => ['label' => 'English (UK)', 'flag' => '🇬🇧'],
+        'de' => ['label' => 'Deutsch', 'flag' => '/assets/flags/de.svg'],
+        'en-GB' => ['label' => 'English (UK)', 'flag' => '/assets/flags/gb.svg'],
     ];
 
     private static ?string $locale = null;

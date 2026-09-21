@@ -14,6 +14,10 @@ const REGISTRATION_CODE_MAX_ATTEMPTS = 5;
 const REGISTRATION_CODE_RESEND_COOLDOWN_SECONDS = 60;
 
 Auth::boot();
+if (Auth::requiresInitialSetup()) {
+    header('Location: /setup.php');
+    exit;
+}
 if (Auth::user() !== null) {
     header('Location: /');
     exit;

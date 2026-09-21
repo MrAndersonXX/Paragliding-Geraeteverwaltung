@@ -7,6 +7,10 @@ require_once __DIR__ . '/../src/Auth.php';
 use Glider\Auth;
 
 Auth::boot();
+if (Auth::requiresInitialSetup()) {
+    header('Location: /setup.php');
+    exit;
+}
 if (Auth::user() !== null) {
     header('Location: /');
     exit;
@@ -22,6 +26,8 @@ if ($accountStatus === Auth::STATUS_PENDING_VERIFICATION) {
     $message = __('login.deactivated');
 } elseif (!empty($_GET['imported'])) {
     $message = __('login.imported');
+} elseif (!empty($_GET['setup'])) {
+    $message = __('login.setup_complete');
 }
 $redirect = (string) ($_POST['redirect'] ?? $_GET['redirect'] ?? '/');
 if (!str_starts_with($redirect, '/') || str_starts_with($redirect, '//')) {

@@ -3,6 +3,7 @@
 namespace Glider;
 
 require_once __DIR__ . '/AuditLog.php';
+require_once __DIR__ . '/RegionalSettings.php';
 
 class Storage
 {
@@ -176,6 +177,7 @@ class Storage
                 'name' => 'Glider Equipment Tracker',
                 'timezone' => 'Europe/Berlin',
             ],
+            'regional' => RegionalSettings::defaults(),
             'mail' => [
                 'host' => '',
                 'port' => '587',
@@ -190,6 +192,13 @@ class Storage
                 'serpapi_key' => '',
             ],
         ]);
+        if (!is_array($settings)) {
+            return [];
+        }
+        $settings['regional'] = RegionalSettings::normalize(array_merge(
+            ['timezone' => (string) ($settings['app']['timezone'] ?? 'Europe/Berlin')],
+            (array) ($settings['regional'] ?? [])
+        ));
         return is_array($settings) ? $settings : [];
     }
 

@@ -18,7 +18,7 @@ Ein Docker-basierter Web-Server für die Verwaltung und Überwachung von Gleitsc
 - Import/Export aller Daten, Einstellungen, Benutzer, Bilder und angehängten Dateien als ein ZIP-Archiv
 - Synology-/Dockhand-kompatibles Docker-Setup: Images werden aus GitHub Container Registry gezogen, auf dem NAS bleiben nur `docker-compose.yml` und der Ordner `data`
 
-Version: 0.7.0
+Version: 0.8.0
 
 ## Überblick
 
@@ -60,8 +60,9 @@ Für jedes Gerät können erfasst werden:
 
 ### Benutzer und Rechte
 
-- Die bestehenden Benutzer werden beim ersten Login als Administratoren übernommen.
-- Das initiale Passwort für bestehende Benutzer lautet `GliderAdmin2026!` und sollte anschließend im Benutzerbereich geändert werden.
+- Bei einer leeren Neuinstallation startet die Anwendung mit einem Einrichtungs-Wizard. Der Wizard ist nur erreichbar, solange noch kein Benutzer existiert.
+- Der Wizard fragt den ersten Administrator, SMTP-Mailversand sowie Sprache, Land, Zeitzone und Datumsformat ab. Die Einrichtung wird erst abgeschlossen, wenn der SMTP-Verbindungstest erfolgreich ist.
+- Der erste Administrator wird nach erfolgreicher Einrichtung direkt als aktives Administratorkonto angelegt.
 - Neue Benutzer können sich selbst mit Vorname, Nachname, E-Mail-Adresse und Passwort registrieren. Ihre E-Mail-Adresse wird mit einem sechsstelligen, 15 Minuten gültigen Bestätigungscode verifiziert.
 - Nach erfolgreicher E-Mail-Bestätigung erhalten alle aktiven Administratoren eine Benachrichtigung. Ein Administrator gibt das Konto anschließend als Benutzer oder Administrator frei.
 - Vor der Freigabe ist keine Anmeldung möglich; unbestätigte, wartende und deaktivierte Konten können keine Fach- oder Benutzerdaten einsehen oder ändern.
@@ -187,6 +188,18 @@ Für jedes Gerät können erfasst werden:
 - Systempfad für das Dockhand-/Compose-Projekt, z. B. `/volume1/docker/glider-manager`
 - Domain mit DNS und SSL-Zertifikat
 - Mailserver oder SMTP-Endpunkt
+
+## Ersteinrichtung
+
+Nach dem ersten Start einer leeren Installation öffnet die Anwendung automatisch den Einrichtungs-Wizard unter `/setup.php`. Dieser Wizard ist nur verfügbar, solange noch kein Benutzerkonto existiert.
+
+Der Wizard legt den ersten Administrator an und speichert die Mindestkonfiguration:
+
+- Administrator: Vorname, Nachname, E-Mail-Adresse und Passwort
+- SMTP: Host, Port, Benutzername, Passwort, Verschlüsselung, Absenderadresse und Absendername
+- Ländereinstellungen: Sprache, Land, Zeitzone und Datumsformat
+
+Die Einrichtung kann nur abgeschlossen werden, wenn der SMTP-Verbindungstest erfolgreich ist. Danach wird der Wizard deaktiviert, und die Anmeldung erfolgt mit dem neu angelegten Administratorkonto. Weitere Benutzer registrieren sich anschließend über den normalen Registrierungsprozess mit Bestätigungscode und Administratorfreigabe.
 
 ## macOS-Installation (Apple Silicon)
 

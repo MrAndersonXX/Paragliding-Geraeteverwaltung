@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-21
+
+### Added
+- Added an initial setup wizard for empty installations. It creates the first active administrator only after SMTP settings pass a required connection test and stores language, country, timezone and date-format defaults.
+
 ### Changed
 - Synology/Dockhand deployment now pulls GHCR images and persists mutable data in a visible `./data` folder, so the NAS project directory only needs `docker-compose.yml` and `data`.
 

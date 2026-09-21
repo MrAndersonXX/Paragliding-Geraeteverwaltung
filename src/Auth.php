@@ -36,6 +36,10 @@ class Auth
     public static function requireLogin(): void
     {
         self::boot();
+        if (self::requiresInitialSetup()) {
+            header('Location: /setup.php');
+            exit;
+        }
         if (self::user() === null) {
             $target = $_SERVER['REQUEST_URI'] ?? '/';
             header('Location: /login.php?redirect=' . rawurlencode($target));
@@ -76,6 +80,11 @@ class Auth
         }
         unset($_SESSION['user_id']);
         return null;
+    }
+
+    public static function requiresInitialSetup(): bool
+    {
+        return Storage::readUsers() === [];
     }
 
     public static function isAdmin(): bool

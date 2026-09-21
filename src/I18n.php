@@ -33,6 +33,10 @@ class I18n
         if ($storedLocale === null || $storedLocale === '') {
             $storedLocale = (string) ($_COOKIE[self::COOKIE_NAME] ?? '');
         }
+        if (($storedLocale === null || $storedLocale === '') && class_exists(Storage::class)) {
+            $settings = Storage::readSettings();
+            $storedLocale = (string) ($settings['regional']['language'] ?? '');
+        }
 
         self::$locale = self::isSupported($storedLocale) ? $storedLocale : self::DEFAULT_LOCALE;
         return self::$locale;

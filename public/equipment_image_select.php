@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../src/Auth.php';
 require_once __DIR__ . '/../src/Storage.php';
+require_once __DIR__ . '/../src/I18n.php';
 require_once __DIR__ . '/../src/ImageSearchService.php';
 
 use Glider\Auth;
@@ -14,7 +15,7 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Methode nicht erlaubt.']);
+    echo json_encode(['success' => false, 'message' => __('ajax.method_not_allowed')]);
     exit;
 }
 
@@ -32,13 +33,13 @@ foreach ($equipment as $existingIndex => $existing) {
 $currentUser = Auth::user();
 if ($index === null || (!Auth::isAdmin() && (int) ($equipment[$index]['user_id'] ?? 0) !== (int) ($currentUser['id'] ?? 0))) {
     http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Zugriff verweigert.']);
+    echo json_encode(['success' => false, 'message' => __('ajax.access_denied')]);
     exit;
 }
 
 if ($imageUrl === '') {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Keine Bild-URL angegeben.']);
+    echo json_encode(['success' => false, 'message' => __('ajax.image_url_missing')]);
     exit;
 }
 
@@ -53,5 +54,5 @@ try {
     echo json_encode(['success' => true, 'image_url' => '/equipment_image.php?id=' . $equipmentId . '&v=' . time()]);
 } catch (\Throwable $exception) {
     http_response_code(422);
-    echo json_encode(['success' => false, 'message' => 'Bild konnte nicht übernommen werden.']);
+    echo json_encode(['success' => false, 'message' => __('ajax.image_import_failed')]);
 }

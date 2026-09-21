@@ -24,7 +24,7 @@ foreach ($equipment as $item) {
     }
 }
 ?>
-<?php pageHeader('Übersicht'); ?>
+<?php pageHeader(__('page.overview')); ?>
         <section class="card page-intro">
             <p class="eyebrow">Startseite</p>
             <h2><?= htmlspecialchars($appName); ?></h2>

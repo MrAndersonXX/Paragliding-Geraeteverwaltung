@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     $equipment = $isAdmin ? $allEquipment : array_values(array_filter($allEquipment, static fn ($item) => (int) ($item['user_id'] ?? 0) === (int) ($currentUser['id'] ?? 0)));
 }
 
-pageHeader('Geräte');
+pageHeader(__('page.equipment'));
 if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif; ?>
 <section class="card list-toolbar">
     <div><h2>Erfasste Geräte</h2><p>Alle Geräte werden hier angezeigt und können bearbeitet oder archiviert werden.</p></div>
@@ -52,7 +52,7 @@ if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif;
 <section class="card">
     <div class="list-filters">
         <label class="filter-field">Geräte filtern<input type="search" id="equipment-filter" placeholder="Name, Typ, Hersteller, Benutzer ..." /></label>
-        <label class="checkbox-field"><input type="checkbox" id="hide-retired" <?= Auth::preference('hide_retired_equipment') ? 'checked' : ''; ?> /> Archivierte ausblenden</label>
+        <label class="checkbox-field"><input type="checkbox" id="hide-retired" <?= Auth::preference('hide_retired_equipment') ? 'checked' : ''; ?> /> <?= e(__('equipment.hide_retired')); ?></label>
     </div>
     <div class="table-wrap"><table id="equipment-table"><thead><tr><th><button type="button" class="sort-button" data-sort="0">Benutzer</button></th><th><button type="button" class="sort-button" data-sort="1">Gerätetyp</button></th><th><button type="button" class="sort-button" data-sort="2">Hersteller</button></th><th><button type="button" class="sort-button" data-sort="3">Gerätename</button></th><th><button type="button" class="sort-button" data-sort="4">Seriennummer</button></th><th><button type="button" class="sort-button" data-sort="5">Nächste geplante Prüfung</button></th><th><button type="button" class="sort-button" data-sort="6">Status</button></th><th>Aktionen</th></tr></thead><tbody>
     <?php if (!$equipment): ?><tr><td colspan="8">Noch keine Geräte erfasst.</td></tr><?php endif; ?>

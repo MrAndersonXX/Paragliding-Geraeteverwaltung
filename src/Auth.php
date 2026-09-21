@@ -103,6 +103,25 @@ class Auth
         return (bool) ($user['preferences'][$key] ?? $default);
     }
 
+    public static function language(): string
+    {
+        $user = self::user();
+        $language = (string) ($user['preferences']['language'] ?? '');
+        return \Glider\I18n::isSupported($language) ? $language : \Glider\I18n::DEFAULT_LOCALE;
+    }
+
+    public static function setLanguage(string $language): bool
+    {
+        if (!\Glider\I18n::isSupported($language) || self::user() === null) {
+            return false;
+        }
+        $user = self::user();
+        self::updateCurrentUser([
+            'preferences' => array_merge((array) ($user['preferences'] ?? []), ['language' => $language]),
+        ]);
+        return true;
+    }
+
     public static function consentGranted(string $key, bool $default = false): bool
     {
         return self::preference($key, $default);

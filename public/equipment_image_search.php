@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../src/Auth.php';
 require_once __DIR__ . '/../src/Storage.php';
+require_once __DIR__ . '/../src/I18n.php';
 require_once __DIR__ . '/../src/ImageSearchService.php';
 
 use Glider\Auth;
@@ -25,13 +26,13 @@ foreach ($equipment as $existing) {
 $currentUser = Auth::user();
 if ($item === null || (!Auth::isAdmin() && (int) ($item['user_id'] ?? 0) !== (int) ($currentUser['id'] ?? 0))) {
     http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Zugriff verweigert.']);
+    echo json_encode(['success' => false, 'message' => __('ajax.access_denied')]);
     exit;
 }
 
 $settings = Storage::readSettings();
 if (empty($settings['image_search']['enabled'])) {
-    echo json_encode(['success' => false, 'message' => 'Die Bildersuche ist nicht aktiviert.']);
+    echo json_encode(['success' => false, 'message' => __('ajax.image_search_disabled')]);
     exit;
 }
 

@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-pageHeader('Benutzer');
+pageHeader(__('page.users'));
 if (isset($_GET['saved'])): ?><div class="alert">Benutzer wurde gespeichert.</div><?php endif; ?>
 <?php if (isset($_GET['mail_failed'])): ?><div class="alert alert-error">Das Konto wurde freigegeben, aber die Informationsmail konnte nicht versendet werden.</div><?php endif; ?>
 <?php if ($message !== ''): ?><div class="alert alert-error"><?= e($message); ?></div><?php endif; ?>

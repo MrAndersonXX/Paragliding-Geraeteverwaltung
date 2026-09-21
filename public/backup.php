@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $safetyBackups = BackupManager::listSafetyBackups();
 
-pageHeader('Import / Export');
+pageHeader(__('page.backup'));
 if ($message !== ''): ?><div class="<?= e($messageClass); ?>"><?= e($message); ?></div><?php endif; ?>
 <section class="card edit-surface">
     <div class="edit-header"><div><p class="eyebrow">Systemverwaltung</p><h2>Datensicherung</h2></div></div>

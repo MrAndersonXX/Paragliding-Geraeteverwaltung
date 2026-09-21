@@ -94,7 +94,7 @@ try {
     $timezone = new DateTimeZone('Europe/Berlin');
 }
 
-pageHeader('Änderungsprotokoll');
+pageHeader(__('page.audit_log'));
 ?>
 <section class="card">
     <div class="list-toolbar"><div><h2>Audit-Historie</h2><p>Alle fachlichen und technischen Änderungen. Vertrauliche Werte werden nie angezeigt.</p></div></div>

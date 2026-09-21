@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-pageHeader('Prüfung eintragen');
+pageHeader(__('page.inspection'));
 if ($message !== ''): ?><div class="alert alert-error"><?= e($message); ?></div><?php endif; ?>
 <section class="card">
     <h2><?= e($item['name'] ?? 'Gerät'); ?></h2>

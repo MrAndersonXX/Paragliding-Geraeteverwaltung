@@ -176,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-pageHeader($editMode ? ($editItem ? 'Gerät bearbeiten' : 'Neues Gerät') : 'Gerätedetails');
+pageHeader($editMode ? ($editItem ? __('page.equipment_edit') : __('page.equipment_new') : __('page.equipment_details'));
 ?>
 <?php if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif; ?>
 <section class="card edit-surface">

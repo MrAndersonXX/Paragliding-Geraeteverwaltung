@@ -91,6 +91,38 @@ body {
     color: white;
 }
 
+.language-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.35rem 0;
+}
+
+.language-switcher form {
+    margin: 0;
+}
+
+.language-option {
+    align-items: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: #dfeaf7;
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    gap: 0.35rem;
+    padding: 0.35rem 0.45rem;
+}
+
+.language-option:hover,
+.language-option:focus,
+.language-option.active {
+    background: #1c4568;
+    border-color: #6ea4c9;
+    color: white;
+}
+
 .sidebar-user {
     display: flex;
     align-items: center;

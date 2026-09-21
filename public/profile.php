@@ -142,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update_profile') {
 
 $user = Auth::user();
 
-pageHeader('Mein Profil');
+pageHeader(__('page.profile'));
 if (isset($_GET['saved'])): ?><div class="alert">Profil wurde gespeichert.</div><?php endif; ?>
 <?php if (isset($_GET['code_sent'])): ?><div class="alert">Profil wurde gespeichert. Ein Bestätigungscode wurde an die neue E-Mail-Adresse gesendet.</div><?php endif; ?>
 <?php if (isset($_GET['confirmed'])): ?><div class="alert">E-Mail-Adresse wurde bestätigt und geändert.</div><?php endif; ?>

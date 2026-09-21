@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-pageHeader('Dokumentkategorien');
+pageHeader(__('page.categories'));
 if (isset($_GET['saved'])): ?><div class="alert">Dokumentkategorie wurde gelöscht.</div><?php endif; ?>
 <?php if ($message !== ''): ?><div class="alert alert-error"><?= e($message); ?></div><?php endif; ?>
 <section class="card">

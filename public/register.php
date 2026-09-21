@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../src/Storage.php';
+require_once __DIR__ . '/../src/I18n.php';
 require_once __DIR__ . '/../src/Auth.php';
 require_once __DIR__ . '/../src/NotificationService.php';
 
@@ -31,7 +32,7 @@ foreach ($users as $user) {
 }
 
 if (isset($_GET['approved'])) {
-    $message = 'Deine E-Mail-Adresse wurde bestätigt. Ein Administrator prüft jetzt deine Registrierung und weist dir die Berechtigung zu.';
+    $message = __('register.email_confirmed');
     $messageClass = 'alert';
 }
 
@@ -48,17 +49,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
         }
     }
     if ($firstName === '' || $lastName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $message = 'Bitte Vorname, Nachname und eine gültige E-Mail-Adresse eingeben.';
+        $message = __('register.required_fields');
     } elseif ($emailTaken) {
-        $message = 'Diese E-Mail-Adresse wird bereits verwendet.';
+        $message = __('register.email_taken');
     } elseif (strlen($password) < 8) {
-        $message = 'Das Passwort muss mindestens 8 Zeichen lang sein.';
+        $message = __('register.password_short');
     } else {
         $code = (string) random_int(100000, 999999);
         $settings = Storage::readSettings();
         $result = (new NotificationService($settings['mail'] ?? []))->sendRegistrationVerificationCode($email, $code);
         if (!$result['success']) {
-            $message = 'Der Bestätigungscode konnte nicht versendet werden (' . $result['message'] . ').';
+            $message = __('register.code_failed', ['message' => $result['message']]);
         } else {
             $nextId = (count($users) > 0 ? max(array_map(static fn (array $user): int => (int) ($user['id'] ?? 0), $users)) : 0) + 1;
             $users[] = [
@@ -70,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
                 'emoji' => '😀',
                 'role' => 'user',
                 'account_status' => Auth::STATUS_PENDING_VERIFICATION,
-                'preferences' => [],
+                'preferences' => ['language' => \Glider\I18n::locale()],
                 'registration_code_hash' => password_hash($code, PASSWORD_DEFAULT),
                 'registration_code_expires_at' => time() + REGISTRATION_CODE_TTL_SECONDS,
                 'registration_code_attempts' => 0,
@@ -85,11 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'confirm_code') {
     $code = trim((string) ($_POST['code'] ?? ''));
     if ($registration === null) {
-        $message = 'Es liegt keine ausstehende Registrierung vor.';
+        $message = __('register.no_pending');
     } elseif (time() > (int) ($registration['registration_code_expires_at'] ?? 0)) {
-        $message = 'Der Bestätigungscode ist abgelaufen. Fordere einen neuen Code an.';
+        $message = __('register.code_expired');
     } elseif ((int) ($registration['registration_code_attempts'] ?? 0) >= REGISTRATION_CODE_MAX_ATTEMPTS) {
-        $message = 'Zu viele Fehlversuche. Fordere einen neuen Code an.';
+        $message = __('register.too_many_attempts');
     } elseif (!password_verify($code, (string) ($registration['registration_code_hash'] ?? ''))) {
         $remaining = REGISTRATION_CODE_MAX_ATTEMPTS - ((int) ($registration['registration_code_attempts'] ?? 0) + 1);
         foreach ($users as $index => $user) {
@@ -99,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
             }
         }
         Storage::saveUsers($users);
-        $message = "Der Code ist ungültig. Verbleibende Versuche: {$remaining}.";
+        $message = __('register.invalid_code', ['remaining' => $remaining]);
     } else {
         foreach ($users as $index => $user) {
             if ((int) ($user['id'] ?? 0) === $registrationId) {
@@ -123,15 +124,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'resend_code') {
     if ($registration === null) {
-        $message = 'Es liegt keine ausstehende Registrierung vor.';
+        $message = __('register.no_pending');
     } elseif (time() - (int) ($registration['registration_code_requested_at'] ?? 0) < REGISTRATION_CODE_RESEND_COOLDOWN_SECONDS) {
-        $message = 'Bitte kurz warten, bevor ein weiterer Bestätigungscode angefordert wird.';
+        $message = __('register.wait_before_resend');
     } else {
         $code = (string) random_int(100000, 999999);
         $settings = Storage::readSettings();
         $result = (new NotificationService($settings['mail'] ?? []))->sendRegistrationVerificationCode((string) $registration['email'], $code);
         if (!$result['success']) {
-            $message = 'Der Bestätigungscode konnte nicht versendet werden (' . $result['message'] . ').';
+            $message = __('register.code_failed', ['message' => $result['message']]);
         } else {
             foreach ($users as $index => $user) {
                 if ((int) ($user['id'] ?? 0) === $registrationId) {
@@ -149,16 +150,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
     }
 }
 ?><!DOCTYPE html>
-<html lang="de">
-<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Registrieren</title><link rel="stylesheet" href="/assets/styles.css" /></head>
-<body><main class="container login-container"><section class="card login-card"><p class="eyebrow">Glider Equipment Tracker</p><h1>Registrieren</h1>
-<?php if (isset($_GET['code_sent'])): ?><div class="alert">Ein Bestätigungscode wurde an deine E-Mail-Adresse gesendet.</div><?php endif; ?>
+<html lang="<?= htmlspecialchars(\Glider\I18n::locale(), ENT_QUOTES, 'UTF-8'); ?>">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title><?= htmlspecialchars(__('register.title'), ENT_QUOTES, 'UTF-8'); ?></title><link rel="stylesheet" href="/assets/styles.css" /></head>
+<body><main class="container login-container"><section class="card login-card"><p class="eyebrow">Glider Equipment Tracker</p><div class="language-switcher" aria-label="<?= htmlspecialchars(__('language.choose'), ENT_QUOTES, 'UTF-8'); ?>"><?php foreach (\Glider\I18n::locales() as $language => $languageInfo): ?><form method="post" action="/language.php"><input type="hidden" name="language" value="<?= htmlspecialchars($language, ENT_QUOTES, 'UTF-8'); ?>" /><input type="hidden" name="redirect" value="/register.php" /><button type="submit" class="language-option<?= \Glider\I18n::locale() === $language ? ' active' : ''; ?>" aria-label="<?= htmlspecialchars($languageInfo['label'], ENT_QUOTES, 'UTF-8'); ?>" title="<?= htmlspecialchars($languageInfo['label'], ENT_QUOTES, 'UTF-8'); ?>"><span aria-hidden="true"><?= htmlspecialchars($languageInfo['flag'], ENT_QUOTES, 'UTF-8'); ?></span><span><?= htmlspecialchars($languageInfo['label'], ENT_QUOTES, 'UTF-8'); ?></span></button></form><?php endforeach; ?></div><h1><?= htmlspecialchars(__('register.title'), ENT_QUOTES, 'UTF-8'); ?></h1>
+<?php if (isset($_GET['code_sent'])): ?><div class="alert"><?= htmlspecialchars(__('register.code_sent'), ENT_QUOTES, 'UTF-8'); ?></div><?php endif; ?>
 <?php if ($message !== ''): ?><div class="<?= htmlspecialchars($messageClass, ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></div><?php endif; ?>
 <?php if ($registration !== null): ?>
-<p>Gib den sechsstelligen Bestätigungscode ein, der an <strong><?= htmlspecialchars((string) $registration['email'], ENT_QUOTES, 'UTF-8'); ?></strong> gesendet wurde.</p>
-<form method="post" class="stacked-form"><input type="hidden" name="action" value="confirm_code" /><label>Bestätigungscode<input type="text" name="code" class="otp-input" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autofocus /></label><button type="submit">E-Mail-Adresse bestätigen</button></form>
-<form method="post" class="action-form"><input type="hidden" name="action" value="resend_code" /><button type="submit" class="button-secondary">Neuen Code anfordern</button></form>
+<p><?= htmlspecialchars(__('register.code_prompt'), ENT_QUOTES, 'UTF-8'); ?> <strong><?= htmlspecialchars((string) $registration['email'], ENT_QUOTES, 'UTF-8'); ?></strong></p>
+<form method="post" class="stacked-form"><input type="hidden" name="action" value="confirm_code" /><label><?= htmlspecialchars(__('register.confirmation_code'), ENT_QUOTES, 'UTF-8'); ?><input type="text" name="code" class="otp-input" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autofocus /></label><button type="submit"><?= htmlspecialchars(__('register.confirm_code'), ENT_QUOTES, 'UTF-8'); ?></button></form>
+<form method="post" class="action-form"><input type="hidden" name="action" value="resend_code" /><button type="submit" class="button-secondary"><?= htmlspecialchars(__('register.resend_code'), ENT_QUOTES, 'UTF-8'); ?></button></form>
 <?php elseif (!isset($_GET['approved'])): ?>
-<form method="post" class="stacked-form"><input type="hidden" name="action" value="register" /><div class="row two-col"><label>Vorname<input type="text" name="first_name" required autofocus /></label><label>Nachname<input type="text" name="last_name" required /></label></div><label>E-Mail-Adresse<input type="email" name="email" required /></label><label>Passwort<input type="password" name="password" minlength="8" required /></label><button type="submit">Bestätigungscode anfordern</button></form>
+<form method="post" class="stacked-form"><input type="hidden" name="action" value="register" /><div class="row two-col"><label><?= htmlspecialchars(__('form.first_name'), ENT_QUOTES, 'UTF-8'); ?><input type="text" name="first_name" required autofocus /></label><label><?= htmlspecialchars(__('form.last_name'), ENT_QUOTES, 'UTF-8'); ?><input type="text" name="last_name" required /></label></div><label><?= htmlspecialchars(__('form.email'), ENT_QUOTES, 'UTF-8'); ?><input type="email" name="email" required /></label><label><?= htmlspecialchars(__('form.password'), ENT_QUOTES, 'UTF-8'); ?><input type="password" name="password" minlength="8" required /></label><button type="submit"><?= htmlspecialchars(__('register.request_code'), ENT_QUOTES, 'UTF-8'); ?></button></form>
 <?php endif; ?>
-<p class="form-hint"><a href="/login.php">Zur Anmeldung</a></p></section></main></body></html>
+<p class="form-hint"><a href="/login.php"><?= htmlspecialchars(__('register.login'), ENT_QUOTES, 'UTF-8'); ?></a></p></section></main></body></html>

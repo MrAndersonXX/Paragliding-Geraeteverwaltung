@@ -1,9 +1,11 @@
 <?php
 
 require_once __DIR__ . '/../src/Storage.php';
+require_once __DIR__ . '/../src/I18n.php';
 require_once __DIR__ . '/../src/Auth.php';
 
 use Glider\Auth;
+use Glider\I18n;
 use Glider\Storage;
 
 function e(mixed $value): string
@@ -15,11 +17,12 @@ function pageHeader(string $title): void
 {
     Auth::requireLogin();
     Storage::ensure();
+    $locale = I18n::locale();
     $settings = Storage::readSettings();
     $appName = $settings['app']['name'] ?? 'Glider Equipment Tracker';
     ?>
     <!DOCTYPE html>
-    <html lang="de">
+    <html lang="<?= e($locale); ?>">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -31,19 +34,19 @@ function pageHeader(string $title): void
         <a class="brand" href="/"><?= e($appName); ?></a>
         <button class="sidebar-toggle" type="button" data-sidebar-toggle aria-controls="primary-navigation" aria-expanded="false">
             <span class="sidebar-toggle-icon" aria-hidden="true"></span>
-            <span>Menü</span>
+            <span><?= e(__('app.menu')); ?></span>
         </button>
         <nav class="sidebar-nav" id="primary-navigation">
-            <a href="/">Übersicht</a>
-            <a href="/equipment_list.php">Geräte</a>
-            <a href="/calendar.php">Kalender</a>
+            <a href="/"><?= e(__('nav.overview')); ?></a>
+            <a href="/equipment_list.php"><?= e(__('nav.equipment')); ?></a>
+            <a href="/calendar.php"><?= e(__('nav.calendar')); ?></a>
             <?php if (Auth::isAdmin()): ?>
-                <a href="/equipment_types.php">Gerätetypen</a>
-                <a href="/users.php">Benutzer</a>
-                <a href="/categories.php">Dokumente</a>
-                <a href="/settings.php">Einstellungen</a>
-                <a href="/backup.php">Import / Export</a>
-                <a href="/audit_log.php">Änderungsprotokoll</a>
+                <a href="/equipment_types.php"><?= e(__('nav.equipment_types')); ?></a>
+                <a href="/users.php"><?= e(__('nav.users')); ?></a>
+                <a href="/categories.php"><?= e(__('nav.documents')); ?></a>
+                <a href="/settings.php"><?= e(__('nav.settings')); ?></a>
+                <a href="/backup.php"><?= e(__('nav.import_export')); ?></a>
+                <a href="/audit_log.php"><?= e(__('nav.audit_log')); ?></a>
             <?php endif; ?>
         </nav>
         <?php $currentUser = Auth::user(); ?>
@@ -51,9 +54,21 @@ function pageHeader(string $title): void
             <a class="sidebar-user" href="/profile.php">
                 <span class="sidebar-user-emoji"><?= e($currentUser['emoji'] ?? '👤'); ?></span>
                 <span class="sidebar-user-name"><?= e(trim(($currentUser['first_name'] ?? '') . ' ' . ($currentUser['last_name'] ?? ''))); ?></span>
-                <span class="role-badge"><?= (($currentUser['role'] ?? 'admin') === 'admin') ? 'Administrator' : 'Benutzer'; ?></span>
+                <span class="role-badge"><?= e((($currentUser['role'] ?? 'admin') === 'admin') ? __('nav.administrator') : __('nav.user')); ?></span>
             </a>
-            <a href="/logout.php">Abmelden</a>
+            <div class="language-switcher" aria-label="<?= e(__('language.choose')); ?>">
+                <?php foreach (I18n::locales() as $language => $languageInfo): ?>
+                    <form method="post" action="/language.php">
+                        <input type="hidden" name="language" value="<?= e($language); ?>" />
+                        <input type="hidden" name="redirect" value="<?= e($_SERVER['REQUEST_URI'] ?? '/'); ?>" />
+                        <button type="submit" class="language-option<?= $locale === $language ? ' active' : ''; ?>" aria-label="<?= e($languageInfo['label']); ?>" title="<?= e($languageInfo['label']); ?>">
+                            <span aria-hidden="true"><?= e($languageInfo['flag']); ?></span>
+                            <span><?= e($languageInfo['label']); ?></span>
+                        </button>
+                    </form>
+                <?php endforeach; ?>
+            </div>
+            <a href="/logout.php"><?= e(__('nav.logout')); ?></a>
         </div>
     </aside>
     <main class="container">
@@ -76,7 +91,7 @@ function emojiPicker(array $groups, string $selected, string $fieldName = 'emoji
         <input type="hidden" name="<?= e($fieldName); ?>" id="<?= e($fieldId); ?>" value="<?= e($selected); ?>" required />
         <button type="button" class="emoji-picker-trigger" data-emoji-trigger aria-haspopup="true" aria-expanded="false">
             <span class="emoji-picker-preview" data-emoji-preview><?= e($selected !== '' ? $selected : '😀'); ?></span>
-            <span>Emoticon wählen</span>
+            <span><?= e(__('emoji.choose')); ?></span>
         </button>
         <div class="emoji-popup" data-emoji-popup hidden>
             <div class="emoji-popup-tabs" role="tablist">
@@ -133,7 +148,7 @@ function pageFooter(): void
                 if (!changed || link.target === '_blank' || link.href === window.location.href) {
                     return;
                 }
-                const leaveAndSave = window.confirm('Änderungen speichern und Seite verlassen?\nAbbrechen bleibt auf dieser Seite.');
+                const leaveAndSave = window.confirm(<?= json_encode(__('form.leave_without_saving'), JSON_UNESCAPED_UNICODE); ?>);
                 if (!leaveAndSave) {
                     event.preventDefault();
                     return;

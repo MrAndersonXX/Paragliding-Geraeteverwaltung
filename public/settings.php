@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-pageHeader('Einstellungen');
+pageHeader(__('page.settings'));
 if ($message !== ''): ?><div class="<?= e($messageClass ?? 'alert'); ?>"><?= e($message); ?></div><?php endif; ?>
 <section class="card edit-surface">
     <div class="edit-header"><div><p class="eyebrow">Systemverwaltung</p><h2>Anwendung &amp; Mailversand</h2></div><?php if ($editMode): ?><a class="button-link button-secondary" href="/settings.php">Abbrechen</a><?php else: ?><a class="button-link" href="/settings.php?edit=1">Bearbeiten</a><?php endif; ?></div>

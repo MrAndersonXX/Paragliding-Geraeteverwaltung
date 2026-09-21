@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-pageHeader('Gerätetypen');
+pageHeader(__('page.equipment_types'));
 if (isset($_GET['saved'])): ?><div class="alert">Gerätetyp wurde gespeichert.</div><?php endif; ?>
 <?php if ($message !== ''): ?><div class="alert alert-error"><?= e($message); ?></div><?php endif; ?>
 <section class="card edit-surface"><div class="edit-header"><div><p class="eyebrow">Stammdaten</p><h2><?= $editType ? 'Gerätetyp editieren' : 'Gerätetyp erweitern'; ?></h2></div><?php if ($editType): ?><a class="button-link button-secondary" href="/equipment_types.php">Abbrechen</a><?php endif; ?></div><form method="post" class="inline-form"><input type="hidden" name="action" value="<?= $editType ? 'edit' : 'create'; ?>" /><input type="hidden" name="id" value="<?= (int) ($editType['id'] ?? 0); ?>" /><label class="compact-field">Bezeichnung<input type="text" name="type_name" value="<?= e($editType['name'] ?? ''); ?>" placeholder="z. B. Tandemschirm" required /></label><button type="submit"><?= $editType ? 'Gerätetyp speichern' : 'Gerätetyp anlegen'; ?></button></form></section>

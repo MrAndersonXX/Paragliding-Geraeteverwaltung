@@ -53,7 +53,7 @@ foreach ($equipment as $item) {
     }
 }
 
-pageHeader('Kalender');
+pageHeader(__('page.calendar'));
 ?>
 <section class="calendar-shell">
     <div class="calendar-toolbar">
@@ -61,7 +61,7 @@ pageHeader('Kalender');
             <p class="eyebrow">Geräteplanung</p>
             <h2><?= e((string) $year); ?></h2>
         </div>
-        <label class="checkbox-field"><input type="checkbox" id="hide-retired" <?= Auth::preference('hide_retired_equipment') ? 'checked' : ''; ?> /> Archivierte ausblenden</label>
+        <label class="checkbox-field"><input type="checkbox" id="hide-retired" <?= Auth::preference('hide_retired_equipment') ? 'checked' : ''; ?> /> <?= e(__('equipment.hide_retired')); ?></label>
         <div class="year-switcher">
             <a href="?year=<?= $year - 1; ?>" aria-label="Vorheriges Jahr">‹</a>
             <strong><?= e((string) $year); ?></strong>

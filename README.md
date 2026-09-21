@@ -37,6 +37,8 @@ Jede Änderung an sichtbaren Inhalten, Formularen, Tabellen oder Navigation muss
 - Feldüberschriften stehen direkt und mit einheitlichem Abstand über ihrem Feld.
 - Texte, Hinweis-Symbole und Bedienelemente dürfen weder überlappen noch horizontal über den Viewport hinausragen.
 - Mehrspaltige Raster wechseln auf kleinen Bildschirmen in eine lesbare einspaltige Darstellung.
+- Die Oberfläche verwendet kompakte Controls, feine 1px-Trennlinien und zurückhaltende Rundungen; Schatten bleiben echten Dialogen und Overlays vorbehalten.
+- Gleichartige Arbeitsbereiche verwenden ein gemeinsames Raster für Abstände, Typografie und Bedienflächen.
 
 ## Funktionsumfang
 

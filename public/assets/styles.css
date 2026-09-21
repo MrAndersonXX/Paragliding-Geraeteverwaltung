@@ -1063,8 +1063,29 @@ tbody tr:hover {
     color: #0f4c81;
 }
 
+.sort-button[data-direction="asc"]::after {
+    content: " ↑";
+}
+
+.sort-button[data-direction="desc"]::after {
+    content: " ↓";
+}
+
 .actions {
     white-space: nowrap;
+}
+
+.document-upload-row {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1fr) minmax(12rem, 1fr);
+    gap: 0.75rem;
+    align-items: end;
+}
+
+@media (max-width: 700px) {
+    .document-upload-row {
+        grid-template-columns: 1fr;
+    }
 }
 
 .emoji-cell {

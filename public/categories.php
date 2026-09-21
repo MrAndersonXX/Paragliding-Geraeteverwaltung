@@ -21,7 +21,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'create';
     $id = (int) ($_POST['id'] ?? 0);
     if ($action === 'delete') {
-        if (($usage[$id] ?? 0) > 0) {
+        $protected = false;
+        foreach ($categories as $category) {
+            if ((int) ($category['id'] ?? 0) === $id && (in_array(($category['slug'] ?? ''), ['kaufbeleg', 'pruefprotokoll'], true) || in_array(($category['name'] ?? ''), ['Kaufbeleg', 'Prüfprotokoll'], true))) {
+                $protected = true;
+                break;
+            }
+        }
+        if ($protected) {
+            $message = 'Die Kategorien Kaufbeleg und Prüfprotokoll können nicht gelöscht werden.';
+        } elseif (($usage[$id] ?? 0) > 0) {
             $message = 'Die Kategorie kann nicht gelöscht werden, solange sie von Dokumenten verwendet wird.';
         } else {
             $categories = array_values(array_filter($categories, static fn ($category) => (int) ($category['id'] ?? 0) !== $id));
@@ -46,5 +55,5 @@ if (isset($_GET['saved'])): ?><div class="alert">Dokumentkategorie wurde gelösc
     <h2>Neue Kategorie</h2>
     <form method="post" class="inline-form"><input type="text" name="category_name" placeholder="z. B. Wartung" required /><button type="submit">Kategorie anlegen</button></form>
 </section>
-<section class="card"><h2>Vorhandene Kategorien</h2><div class="table-wrap"><table><thead><tr><th>Kategorie</th><th>Verwendung</th><th>Aktionen</th></tr></thead><tbody><?php foreach ($categories as $category): ?><?php $categoryId = (int) ($category['id'] ?? 0); ?><?php $categoryUsage = (int) ($usage[$categoryId] ?? 0); ?><tr><td><?= e($category['name'] ?? ''); ?></td><td><?= $categoryUsage; ?></td><td class="actions"><form method="post" class="action-form"><input type="hidden" name="action" value="delete" /><input type="hidden" name="id" value="<?= $categoryId; ?>" /><button type="submit" class="button-muted" <?= $categoryUsage > 0 ? 'disabled title="Noch von Dokumenten verwendet"' : ''; ?>>Löschen</button></form></td></tr><?php endforeach; ?></tbody></table></div></section>
+<section class="card"><h2>Vorhandene Kategorien</h2><div class="table-wrap"><table id="document-categories-table" data-sortable><thead><tr><th><button type="button" class="sort-button" data-sort="0">Kategorie</button></th><th><button type="button" class="sort-button" data-sort="1" data-sort-type="number">Verwendung</button></th><th>Aktionen</th></tr></thead><tbody><?php foreach ($categories as $category): ?><?php $categoryId = (int) ($category['id'] ?? 0); ?><?php $categoryUsage = (int) ($usage[$categoryId] ?? 0); ?><?php $protected = in_array(($category['slug'] ?? ''), ['kaufbeleg', 'pruefprotokoll'], true) || in_array(($category['name'] ?? ''), ['Kaufbeleg', 'Prüfprotokoll'], true); ?><tr><td><?= e($category['name'] ?? ''); ?></td><td><?= $categoryUsage; ?></td><td class="actions"><form method="post" class="action-form"><input type="hidden" name="action" value="delete" /><input type="hidden" name="id" value="<?= $categoryId; ?>" /><button type="submit" class="button-muted" <?= ($protected || $categoryUsage > 0) ? 'disabled title="' . ($protected ? 'Feste Systemkategorie' : 'Noch von Dokumenten verwendet') . '"' : ''; ?>><?= $protected ? 'Nicht löschbar' : 'Löschen'; ?></button></form></td></tr><?php endforeach; ?></tbody></table></div></section>
 <?php pageFooter();

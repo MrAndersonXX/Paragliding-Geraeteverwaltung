@@ -91,6 +91,13 @@ Für jedes Gerät können erfasst werden:
 
 - Dokumente können als PDF oder andere zulässige Dateien hochgeladen werden.
 - Kategorien sind frei anlegbar, z. B. Kaufbeleg, Prüfprotokoll, Herstellerinfo, Wartung, Nachprüfung, Sonstiges.
+- Dokumente können direkt in der Geräteansicht hochgeladen, geöffnet und gelöscht werden.
+- Kaufbeleg und Prüfprotokoll sind feste Kategorien und können nicht gelöscht werden.
+- Beim Start einer Prüfung aus der Geräteliste wird Prüfprotokoll automatisch vorausgewählt.
+
+### Tabellen
+
+- Die Geräte-, Gerätetyp-, Dokumentkategorien- und Benutzerlisten können durch Klick auf die Spaltentitel sortiert werden.
 
 ### Import/Export
 

@@ -15,6 +15,7 @@ Auth::requireActiveAccount();
 Storage::ensure();
 $equipment = Storage::readEquipment();
 $documents = Storage::readEquipmentDocuments();
+$documentCategories = Storage::readDocumentCategories();
 $users = Storage::readUsers();
 $equipmentTypes = Storage::readEquipmentTypes();
 $editId = (int) ($_GET['id'] ?? $_GET['edit'] ?? $_POST['id'] ?? 0);
@@ -33,6 +34,7 @@ $visibleEquipment = $isAdmin ? $equipment : array_values(array_filter($equipment
 $isNew = $editItem === null;
 $editMode = $isNew || isset($_GET['edit']) || $_SERVER['REQUEST_METHOD'] === 'POST';
 $timelineEntries = $editItem === null ? [] : EquipmentTimeline::entries($editItem, $documents);
+$equipmentDocuments = $editItem === null ? [] : array_values(array_filter($documents, static fn ($document) => (int) ($document['equipment_id'] ?? 0) === (int) $editItem['id']));
 if (!$isAdmin && $editItem !== null && (int) ($editItem['user_id'] ?? 0) !== (int) ($currentUser['id'] ?? 0)) {
     http_response_code(403);
     exit('Zugriff verweigert.');
@@ -75,6 +77,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Storage::deleteEquipmentDocuments($id);
         header('Location: /equipment_list.php?saved=1');
         exit;
+    }
+    if (($_POST['action'] ?? '') === 'upload_documents' && $editItem !== null) {
+        $uploadedDocuments = $_FILES['documents'] ?? [];
+        $documentCategoryIds = $_POST['document_category_ids'] ?? [];
+        $documentCategoryIds = is_array($documentCategoryIds) ? $documentCategoryIds : [];
+        $result = Storage::storeUploadedDocuments($editId, $uploadedDocuments, $documentCategoryIds);
+        if ($result['error'] !== '') {
+            $message = $result['error'];
+            $editMode = false;
+        } else {
+            header('Location: /equipment_form.php?id=' . $editId . '&saved=1');
+            exit;
+        }
+    }
+    if (($_POST['action'] ?? '') === 'delete_document' && $editItem !== null) {
+        if (Storage::deleteEquipmentDocument((int) ($_POST['document_id'] ?? 0), $editId)) {
+            header('Location: /equipment_form.php?id=' . $editId . '&saved=1');
+            exit;
+        }
+        $message = 'Dokument konnte nicht gelöscht werden.';
+        $editMode = false;
     }
     $id = $id ?: ((count($equipment) > 0 ? max(array_map(fn ($item) => (int) ($item['id'] ?? 0), $equipment)) : 0) + 1);
     $formEquipmentType = trim((string) ($_POST['equipment_type'] ?? ''));
@@ -296,6 +319,16 @@ pageHeader($editMode ? ($editItem ? __('page.equipment_edit') : __('page.equipme
                 <div class="detail-row detail-row-wide"><span class="detail-label">Notiz</span><span class="detail-value"><?= e($editItem['notes'] ?? ''); ?></span></div>
             </div>
         </section>
+        <section class="detail-section">
+            <h3>Dokumente</h3>
+            <?php if ($equipmentDocuments === []): ?><p class="form-hint">Noch keine Dokumente hinterlegt.</p><?php else: ?><div class="table-wrap"><table><thead><tr><th>Datei</th><th>Kategorie</th><th>Hochgeladen</th><th>Aktionen</th></tr></thead><tbody><?php foreach ($equipmentDocuments as $document): ?><?php $categoryName = 'Unbekannt'; foreach ($documentCategories as $category) { if ((int) ($category['id'] ?? 0) === (int) ($document['category_id'] ?? 0)) { $categoryName = (string) ($category['name'] ?? $categoryName); break; } } ?><tr><td><?= e($document['original_name'] ?? 'Dokument'); ?></td><td><?= e($categoryName); ?></td><td><?= e(date('d.m.Y H:i', strtotime((string) ($document['uploaded_at'] ?? 'now')))); ?></td><td class="actions"><a class="button-link" href="/equipment_document.php?id=<?= (int) ($document['id'] ?? 0); ?>&equipment_id=<?= (int) $editItem['id']; ?>">Öffnen</a><form method="post" class="action-form" data-confirm="Dokument wirklich löschen?"><input type="hidden" name="action" value="delete_document" /><input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" /><input type="hidden" name="document_id" value="<?= (int) ($document['id'] ?? 0); ?>" /><button type="submit" class="button-danger">Löschen</button></form></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
+            <form method="post" class="stacked-form document-upload-form" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="upload_documents" />
+                <input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" />
+                <div id="equipment-document-upload-list"><div class="document-upload-row"><input type="file" name="documents[]" accept=".pdf,.jpg,.jpeg,.png,.webp,.txt" /><select name="document_category_ids[]"><option value="">Dokumentenkategorie wählen</option><?php foreach ($documentCategories as $category): ?><option value="<?= (int) ($category['id'] ?? 0); ?>"><?= e($category['name'] ?? ''); ?></option><?php endforeach; ?></select></div></div>
+                <div class="button-row"><button type="button" class="button-muted" id="add-equipment-document">Weiteres Dokument</button><button type="submit">Dokumente speichern</button></div>
+            </form>
+        </section>
         <section class="detail-section timeline-section">
             <h3>Zeitstrahl</h3>
             <?php if ($timelineEntries === []): ?>
@@ -376,6 +409,16 @@ if (equipmentType && assignedEquipment) {
     };
     updateAssignmentRequirement();
     equipmentType.addEventListener('change', updateAssignmentRequirement);
+}
+const equipmentDocumentUploadList = document.getElementById('equipment-document-upload-list');
+const addEquipmentDocumentButton = document.getElementById('add-equipment-document');
+if (equipmentDocumentUploadList && addEquipmentDocumentButton) {
+    addEquipmentDocumentButton.addEventListener('click', function () {
+        const row = equipmentDocumentUploadList.firstElementChild.cloneNode(true);
+        row.querySelector('input').value = '';
+        row.querySelector('select').value = '';
+        equipmentDocumentUploadList.appendChild(row);
+    });
 }
 
 const imagePickerTrigger = document.querySelector('[data-open-image-picker]');

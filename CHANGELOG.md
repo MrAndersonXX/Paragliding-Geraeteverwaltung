@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Added document upload, display, opening and deletion directly in the equipment details.
+- Added automatic selection of the `Prüfprotokoll` category when starting an inspection from the equipment list.
+- Added clickable sorting for equipment, equipment types, document categories and users.
+
+### Changed
+- The `Kaufbeleg` and `Prüfprotokoll` document categories can no longer be deleted.
+
 ## [0.8.2] - 2026-09-21
 
 ### Added

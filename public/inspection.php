@@ -12,6 +12,15 @@ Auth::requireActiveAccount();
 Storage::ensure();
 $equipment = Storage::readEquipment();
 $documentCategories = Storage::readDocumentCategories();
+$selectedCategoryId = 0;
+if (($_GET['document_category'] ?? '') === 'inspection') {
+    foreach ($documentCategories as $category) {
+        if (($category['slug'] ?? '') === 'pruefprotokoll' || ($category['name'] ?? '') === 'Prüfprotokoll') {
+            $selectedCategoryId = (int) ($category['id'] ?? 0);
+            break;
+        }
+    }
+}
 $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 $itemIndex = null;
 $item = null;
@@ -172,7 +181,7 @@ if ($message !== ''): ?><div class="alert alert-error"><?= e($message); ?></div>
             <div id="document-upload-list">
                 <div class="document-upload-row">
                     <input type="file" name="documents[]" accept=".pdf,.jpg,.jpeg,.png,.webp,.txt" />
-                    <select name="document_category_ids[]"><option value="">Dokumentenkategorie wählen</option><?php foreach ($documentCategories as $category): ?><option value="<?= (int) ($category['id'] ?? 0); ?>"><?= e($category['name'] ?? ''); ?></option><?php endforeach; ?></select>
+                    <select name="document_category_ids[]"><option value="">Dokumentenkategorie wählen</option><?php foreach ($documentCategories as $category): ?><option value="<?= (int) ($category['id'] ?? 0); ?>" <?= (int) ($category['id'] ?? 0) === $selectedCategoryId ? 'selected' : ''; ?>><?= e($category['name'] ?? ''); ?></option><?php endforeach; ?></select>
                 </div>
             </div>
             <button type="button" class="button-muted" id="add-document">Weiteres Dokument</button>

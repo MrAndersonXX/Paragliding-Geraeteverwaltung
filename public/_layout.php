@@ -131,6 +131,7 @@ function pageFooter(): void
 {
     ?>
     <script src="/assets/emoji-picker.js"></script>
+    <script src="/assets/table-sort.js"></script>
     <script>
     document.querySelectorAll('form[data-confirm]').forEach(function (form) {
         form.addEventListener('submit', function (event) {

@@ -93,6 +93,109 @@ class Storage
         self::saveCollection('equipment_documents.json', $documents, 'document', static fn (array $item): string => trim((string) ($item['original_name'] ?? $item['name'] ?? '')) ?: 'Unbenanntes Dokument');
     }
 
+    public static function storeUploadedDocuments(int $equipmentId, array $uploadedDocuments, array $documentCategoryIds, ?string $inspectionDate = null): array
+    {
+        $documents = self::readEquipmentDocuments();
+        $categories = self::readDocumentCategories();
+        $categoryIds = array_fill_keys(array_map('intval', array_column($categories, 'id')), true);
+        $names = $uploadedDocuments['name'] ?? [];
+        $errors = $uploadedDocuments['error'] ?? [];
+        $sizes = $uploadedDocuments['size'] ?? [];
+        $temporaryPaths = $uploadedDocuments['tmp_name'] ?? [];
+        $uploadCount = is_array($names) ? count($names) : 0;
+        if ($uploadCount !== count($documentCategoryIds)) {
+            return ['documents' => [], 'error' => 'Bitte jedem Dokument eine Dokumentenkategorie zuordnen.'];
+        }
+
+        $pendingDocuments = [];
+        $allowedMimeTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'text/plain'];
+        foreach ($documentCategoryIds as $index => $categoryId) {
+            $error = (int) ($errors[$index] ?? UPLOAD_ERR_NO_FILE);
+            if ($error === UPLOAD_ERR_NO_FILE) {
+                if (trim((string) $categoryId) !== '') {
+                    return ['documents' => [], 'error' => 'Bitte lade für jede ausgewählte Dokumentenkategorie eine Datei hoch.'];
+                }
+                continue;
+            }
+            if ($error !== UPLOAD_ERR_OK || !isset($categoryIds[(int) $categoryId])) {
+                return ['documents' => [], 'error' => 'Jedes Dokument muss erfolgreich hochgeladen und einer gültigen Dokumentenkategorie zugeordnet werden.'];
+            }
+            if ((int) ($sizes[$index] ?? 0) > 10 * 1024 * 1024) {
+                return ['documents' => [], 'error' => 'Dokumente dürfen maximal 10 MB groß sein.'];
+            }
+            $temporaryPath = (string) ($temporaryPaths[$index] ?? '');
+            $mimeType = $temporaryPath !== '' ? (new \finfo(FILEINFO_MIME_TYPE))->file($temporaryPath) : false;
+            if (!is_string($mimeType) || !in_array($mimeType, $allowedMimeTypes, true)) {
+                return ['documents' => [], 'error' => 'Erlaubt sind PDF-, JPG-, PNG-, WebP- und Textdateien.'];
+            }
+            $originalName = basename((string) ($names[$index] ?? 'Dokument'));
+            $pendingDocuments[] = [
+                'equipment_id' => $equipmentId,
+                'category_id' => (int) $categoryId,
+                'original_name' => $originalName,
+                'stored_name' => bin2hex(random_bytes(16)) . '-' . preg_replace('/[^A-Za-z0-9._-]/', '_', $originalName),
+                'mime_type' => $mimeType,
+                'file_size' => (int) ($sizes[$index] ?? 0),
+                'uploaded_at' => date('c'),
+            ];
+            if ($inspectionDate !== null && $inspectionDate !== '') {
+                $pendingDocuments[array_key_last($pendingDocuments)]['inspection_date'] = $inspectionDate;
+            }
+            $pendingDocuments[array_key_last($pendingDocuments)]['temporary_path'] = $temporaryPath;
+        }
+
+        $nextDocumentId = $documents === [] ? 0 : max(array_map(static fn ($document) => (int) ($document['id'] ?? 0), $documents));
+        $newDocuments = [];
+        foreach ($pendingDocuments as $pendingDocument) {
+            $storedPath = self::equipmentUploadDirectory() . '/' . $pendingDocument['stored_name'];
+            if (!move_uploaded_file($pendingDocument['temporary_path'], $storedPath)) {
+                foreach ($newDocuments as $newDocument) {
+                    @unlink(self::equipmentUploadDirectory() . '/' . $newDocument['stored_name']);
+                }
+                return ['documents' => [], 'error' => 'Ein Dokument konnte nicht gespeichert werden.'];
+            }
+            unset($pendingDocument['temporary_path']);
+            $pendingDocument['id'] = ++$nextDocumentId;
+            $newDocuments[] = $pendingDocument;
+        }
+        if ($newDocuments !== []) {
+            self::saveEquipmentDocuments(array_merge($documents, $newDocuments));
+        }
+        return ['documents' => $newDocuments, 'error' => ''];
+    }
+
+    public static function readEquipmentDocument(int $documentId, int $equipmentId): ?array
+    {
+        foreach (self::readEquipmentDocuments() as $document) {
+            if ((int) ($document['id'] ?? 0) === $documentId && (int) ($document['equipment_id'] ?? 0) === $equipmentId) {
+                return $document;
+            }
+        }
+        return null;
+    }
+
+    public static function deleteEquipmentDocument(int $documentId, int $equipmentId): bool
+    {
+        $documents = self::readEquipmentDocuments();
+        $remaining = [];
+        $deleted = false;
+        foreach ($documents as $document) {
+            if ((int) ($document['id'] ?? 0) === $documentId && (int) ($document['equipment_id'] ?? 0) === $equipmentId) {
+                $storedName = basename((string) ($document['stored_name'] ?? ''));
+                if ($storedName !== '') {
+                    @unlink(self::equipmentUploadDirectory() . '/' . $storedName);
+                }
+                $deleted = true;
+                continue;
+            }
+            $remaining[] = $document;
+        }
+        if ($deleted) {
+            self::saveEquipmentDocuments($remaining);
+        }
+        return $deleted;
+    }
+
     public static function deleteEquipmentDocuments(int $equipmentId): void
     {
         $documents = self::readEquipmentDocuments();

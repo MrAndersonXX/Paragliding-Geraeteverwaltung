@@ -54,9 +54,9 @@ if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif;
         <label class="filter-field">Geräte filtern<input type="search" id="equipment-filter" placeholder="Name, Typ, Hersteller, Benutzer ..." /></label>
         <label class="checkbox-field"><input type="checkbox" id="hide-retired" <?= Auth::preference('hide_retired_equipment') ? 'checked' : ''; ?> /> <?= e(__('equipment.hide_retired')); ?></label>
     </div>
-    <div class="table-wrap"><table id="equipment-table"><thead><tr><th><button type="button" class="sort-button" data-sort="0">Benutzer</button></th><th><button type="button" class="sort-button" data-sort="1">Gerätetyp</button></th><th><button type="button" class="sort-button" data-sort="2">Hersteller</button></th><th><button type="button" class="sort-button" data-sort="3">Gerätename</button></th><th><button type="button" class="sort-button" data-sort="4">Seriennummer</button></th><th><button type="button" class="sort-button" data-sort="5">Nächste geplante Prüfung</button></th><th><button type="button" class="sort-button" data-sort="6">Status</button></th><th>Aktionen</th></tr></thead><tbody>
-    <?php if (!$equipment): ?><tr><td colspan="8">Noch keine Geräte erfasst.</td></tr><?php endif; ?>
-    <?php foreach ($equipment as $item): ?><?php $user = $usersById[(int) ($item['user_id'] ?? 0)] ?? null; $itemId = (int) ($item['id'] ?? 0); $itemName = (string) ($item['name'] ?? ''); ?><tr class="equipment-row<?= ($item['status'] ?? 'active') === 'retired' ? ' equipment-row-retired' : ''; ?>" data-href="/equipment_form.php?id=<?= $itemId; ?>" tabindex="0"><td class="emoji-cell"><?= e($user['emoji'] ?? ''); ?></td><td><?= e($item['equipment_type'] ?? $item['category'] ?? ''); ?></td><td><?= e($item['manufacturer'] ?? ''); ?></td><td><?= e($item['name'] ?? ''); ?></td><td><?= e($item['serial_number'] ?? ''); ?></td><td><?= e($item['next_inspection_date'] ?? ''); ?></td><td><?= e($item['status'] ?? 'active'); ?></td><td class="actions"><?php if (($item['status'] ?? 'active') !== 'retired'): ?><a class="button-link" href="/inspection.php?id=<?= $itemId; ?>">Prüfung eintragen</a><?php endif; ?><?php if ($isAdmin): ?><form method="post" class="action-form" data-confirm="Gerät „<?= e($itemName); ?>“ inklusive Prüfungshistorie und Dokumenten endgültig löschen?"><input type="hidden" name="action" value="delete_equipment" /><input type="hidden" name="id" value="<?= $itemId; ?>" /><button type="submit" class="button-danger">Löschen</button></form><?php endif; ?></td></tr><?php endforeach; ?>
+    <div class="table-wrap"><table id="equipment-table" data-sortable><thead><tr><th><button type="button" class="sort-button" data-sort="0">Benutzer</button></th><th><button type="button" class="sort-button" data-sort="1">Gerätetyp</button></th><th><button type="button" class="sort-button" data-sort="2">Hersteller</button></th><th><button type="button" class="sort-button" data-sort="3">Gerätename</button></th><th><button type="button" class="sort-button" data-sort="4">Seriennummer</button></th><th><button type="button" class="sort-button" data-sort="5">Nächste geplante Prüfung</button></th><th><button type="button" class="sort-button" data-sort="6">Status</button></th><th>Aktionen</th></tr></thead><tbody>
+    <?php if (!$equipment): ?><tr data-sortable-row="false"><td colspan="8">Noch keine Geräte erfasst.</td></tr><?php endif; ?>
+    <?php foreach ($equipment as $item): ?><?php $user = $usersById[(int) ($item['user_id'] ?? 0)] ?? null; $itemId = (int) ($item['id'] ?? 0); $itemName = (string) ($item['name'] ?? ''); ?><tr class="equipment-row<?= ($item['status'] ?? 'active') === 'retired' ? ' equipment-row-retired' : ''; ?>" data-href="/equipment_form.php?id=<?= $itemId; ?>" tabindex="0"><td class="emoji-cell"><?= e($user['emoji'] ?? ''); ?></td><td><?= e($item['equipment_type'] ?? $item['category'] ?? ''); ?></td><td><?= e($item['manufacturer'] ?? ''); ?></td><td><?= e($item['name'] ?? ''); ?></td><td><?= e($item['serial_number'] ?? ''); ?></td><td><?= e($item['next_inspection_date'] ?? ''); ?></td><td><?= e($item['status'] ?? 'active'); ?></td><td class="actions"><?php if (($item['status'] ?? 'active') !== 'retired'): ?><a class="button-link" href="/inspection.php?id=<?= $itemId; ?>&amp;document_category=inspection">Prüfung eintragen</a><?php endif; ?><?php if ($isAdmin): ?><form method="post" class="action-form" data-confirm="Gerät „<?= e($itemName); ?>“ inklusive Prüfungshistorie und Dokumenten endgültig löschen?"><input type="hidden" name="action" value="delete_equipment" /><input type="hidden" name="id" value="<?= $itemId; ?>" /><button type="submit" class="button-danger">Löschen</button></form><?php endif; ?></td></tr><?php endforeach; ?>
     </tbody></table></div>
 </section>
 <script>
@@ -92,21 +92,6 @@ if (filter && table) {
         row.addEventListener('keydown', function (event) { if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('a, button, form')) { event.preventDefault(); open(); } });
     });
     filter.addEventListener('input', applyVisibility);
-    table.querySelectorAll('.sort-button').forEach(function (button) {
-        button.addEventListener('click', function () {
-            const column = Number(button.dataset.sort);
-            const body = table.querySelector('tbody');
-            const rows = Array.from(body.querySelectorAll('tr')).filter(function (row) {
-                return row.children.length > column;
-            });
-            const direction = button.dataset.direction === 'asc' ? -1 : 1;
-            button.dataset.direction = direction === 1 ? 'asc' : 'desc';
-            rows.sort(function (a, b) {
-                return direction * a.children[column].textContent.trim().localeCompare(b.children[column].textContent.trim(), 'de', { numeric: true, sensitivity: 'base' });
-            });
-            rows.forEach(function (row) { body.appendChild(row); });
-        });
-    });
 }
 </script>
 <?php pageFooter();

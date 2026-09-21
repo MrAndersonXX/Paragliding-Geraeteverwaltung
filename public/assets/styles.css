@@ -759,6 +759,96 @@ label {
     margin: 0;
 }
 
+.password-requirements {
+    background: #f7fafc;
+    border: 1px solid #d9e3ec;
+    border-radius: 6px;
+    padding: 0.9rem 1rem;
+}
+
+.password-requirements h4 {
+    color: #24445e;
+    font-size: 0.95rem;
+    margin: 0 0 0.65rem;
+}
+
+.password-requirements ul {
+    display: grid;
+    gap: 0.45rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.password-requirements li {
+    align-items: center;
+    color: #5c7891;
+    display: grid;
+    font-size: 0.9rem;
+    gap: 0.45rem;
+    grid-template-columns: 1rem minmax(0, 1fr) auto;
+}
+
+.password-requirement-icon {
+    background: #8b9cac;
+    border-radius: 50%;
+    height: 0.7rem;
+    position: relative;
+    width: 0.7rem;
+}
+
+.password-requirement-icon::after {
+    color: white;
+    content: '–';
+    font-size: 0.7rem;
+    font-weight: 700;
+    left: 50%;
+    line-height: 1;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -54%);
+}
+
+.password-requirement-status {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.password-requirements li.is-fulfilled {
+    color: #17633b;
+}
+
+.password-requirements li.is-fulfilled .password-requirement-icon {
+    background: #23834d;
+}
+
+.password-requirements li.is-fulfilled .password-requirement-icon::after {
+    content: '✓';
+    font-size: 0.6rem;
+    transform: translate(-50%, -51%);
+}
+
+.password-requirements li.is-unfulfilled {
+    color: #9c3028;
+}
+
+.password-requirements li.is-unfulfilled .password-requirement-icon {
+    background: #bd4439;
+}
+
+.password-requirements li.is-unfulfilled .password-requirement-icon::after {
+    content: '×';
+    font-size: 0.8rem;
+    transform: translate(-50%, -53%);
+}
+
+.password-requirements-summary {
+    color: #5c7891;
+    font-size: 0.85rem;
+    margin: 0.7rem 0 0;
+}
+
 input, select, textarea, button {
     border: 1px solid #c7d2de;
     border-radius: 8px;

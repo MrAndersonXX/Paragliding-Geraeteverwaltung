@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-09-21
+
+### Added
+- Added a live password-requirements checklist for initial setup, registration, profile password changes, and administrator-managed user passwords.
+
+### Changed
+- New and changed passwords now require at least 12 characters, an uppercase letter, a lowercase letter, a number, a special character, and a matching confirmation.
+
 ## [0.8.1] - 2026-09-21
 
 ### Added

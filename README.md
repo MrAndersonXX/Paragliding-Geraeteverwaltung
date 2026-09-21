@@ -18,7 +18,7 @@ Ein Docker-basierter Web-Server für die Verwaltung und Überwachung von Gleitsc
 - Import/Export aller Daten, Einstellungen, Benutzer, Bilder und angehängten Dateien als ein ZIP-Archiv
 - Synology-/Dockhand-kompatibles Docker-Setup: Images werden aus GitHub Container Registry gezogen, auf dem NAS bleiben nur `docker-compose.yml` und der Ordner `data`
 
-Version: 0.8.1
+Version: 0.8.2
 
 ## Überblick
 
@@ -64,6 +64,7 @@ Für jedes Gerät können erfasst werden:
 - Der Wizard fragt den ersten Administrator, SMTP-Mailversand sowie Sprache, Land, Zeitzone und Datumsformat ab. Die Einrichtung wird erst abgeschlossen, wenn der SMTP-Verbindungstest erfolgreich ist.
 - Der erste Administrator wird nach erfolgreicher Einrichtung direkt als aktives Administratorkonto angelegt.
 - Neue Benutzer können sich selbst mit Vorname, Nachname, E-Mail-Adresse und Passwort registrieren. Ihre E-Mail-Adresse wird mit einem sechsstelligen, 15 Minuten gültigen Bestätigungscode verifiziert.
+- Neue und geänderte Passwörter müssen mindestens 12 Zeichen sowie jeweils einen Großbuchstaben, Kleinbuchstaben, eine Zahl und ein Sonderzeichen enthalten. Die Anforderungsliste zeigt während der Eingabe live den Erfüllungsstatus; das Passwort muss zur Bestätigung zweimal identisch eingegeben werden.
 - Nach erfolgreicher E-Mail-Bestätigung erhalten alle aktiven Administratoren eine Benachrichtigung. Ein Administrator gibt das Konto anschließend als Benutzer oder Administrator frei.
 - Vor der Freigabe ist keine Anmeldung möglich; unbestätigte, wartende und deaktivierte Konten können keine Fach- oder Benutzerdaten einsehen oder ändern.
 - Administratoren haben Zugriff auf alle Bereiche und Geräte.

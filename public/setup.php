@@ -5,10 +5,12 @@ require_once __DIR__ . '/../src/I18n.php';
 require_once __DIR__ . '/../src/Auth.php';
 require_once __DIR__ . '/../src/NotificationService.php';
 require_once __DIR__ . '/../src/RegionalSettings.php';
+require_once __DIR__ . '/_password_requirements.php';
 
 use Glider\Auth;
 use Glider\I18n;
 use Glider\NotificationService;
+use Glider\PasswordPolicy;
 use Glider\RegionalSettings;
 use Glider\Storage;
 
@@ -67,8 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($form['first_name'] === '' || $form['last_name'] === '' || !filter_var($form['email'], FILTER_VALIDATE_EMAIL)) {
         $message = __('setup.error_admin_required');
-    } elseif (strlen($password) < 8) {
-        $message = __('register.password_short');
+    } elseif (!PasswordPolicy::isValid($password)) {
+        $message = __('password.invalid');
     } elseif ($password !== $passwordConfirm) {
         $message = __('setup.error_password_confirm');
     } elseif ($form['app_name'] === '') {
@@ -136,9 +138,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <label><?= setup_e(__('form.email')); ?><input type="email" name="email" value="<?= setup_e($form['email']); ?>" required /></label>
                     <div class="row two-col">
-                        <label><?= setup_e(__('form.password')); ?><input type="password" name="password" minlength="8" required /></label>
-                        <label><?= setup_e(__('setup.password_confirm')); ?><input type="password" name="password_confirm" minlength="8" required /></label>
+                        <label><?= setup_e(__('form.password')); ?><input type="password" name="password" minlength="12" required /></label>
+                        <label><?= setup_e(__('form.password_confirm')); ?><input type="password" name="password_confirm" minlength="12" required /></label>
                     </div>
+                    <?php passwordRequirements(); ?>
                 </section>
                 <section class="form-section">
                     <h3><?= setup_e(__('setup.regional_section')); ?></h3>
@@ -174,5 +177,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </section>
 </main>
+<script src="/assets/password-requirements.js"></script>
 </body>
 </html>

@@ -4,11 +4,13 @@ require __DIR__ . '/_layout.php';
 require_once __DIR__ . '/../src/EmojiCatalog.php';
 require_once __DIR__ . '/../src/Auth.php';
 require_once __DIR__ . '/../src/NotificationService.php';
+require_once __DIR__ . '/_password_requirements.php';
 
 use Glider\Storage;
 use Glider\EmojiCatalog;
 use Glider\Auth;
 use Glider\NotificationService;
+use Glider\PasswordPolicy;
 
 Storage::ensure();
 Auth::requireAdmin();
@@ -75,19 +77,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim((string) ($_POST['email'] ?? ''));
     $role = ($_POST['role'] ?? 'user') === 'admin' ? 'admin' : 'user';
     $password = (string) ($_POST['password'] ?? '');
+    $passwordConfirm = (string) ($_POST['password_confirm'] ?? '');
     $adminCount = count(Auth::activeAdministrators());
     if ($firstName === '' || $lastName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $message = 'Bitte Vorname, Nachname und eine gültige E-Mail-Adresse eingeben.';
-    } elseif (!$editUser && strlen($password) < 8) {
-        $message = 'Das Passwort muss mindestens 8 Zeichen lang sein.';
+    } elseif (!$editUser && !PasswordPolicy::isValid($password)) {
+        $message = __('password.invalid');
+    } elseif ($password !== '' && $password !== $passwordConfirm) {
+        $message = __('password.confirmation_mismatch');
     } elseif ($editUser && ($editUser['role'] ?? 'admin') === 'admin' && Auth::accountStatus($editUser) === Auth::STATUS_ACTIVE && $role !== 'admin' && $adminCount <= 1) {
         $message = 'Mindestens ein Benutzer muss Admin bleiben.';
     } else {
         $selectedEmoji = trim((string) ($_POST['emoji'] ?? ''));
         $item = array_merge($editUser ?? [], ['id' => $id, 'first_name' => $firstName, 'last_name' => $lastName, 'email' => $email, 'emoji' => EmojiCatalog::contains($selectedEmoji) ? $selectedEmoji : '😀', 'role' => $role, 'account_status' => $editUser['account_status'] ?? Auth::STATUS_ACTIVE]);
         if ($password !== '') {
-            if (strlen($password) < 8) {
-                $message = 'Das Passwort muss mindestens 8 Zeichen lang sein.';
+            if (!PasswordPolicy::isValid($password)) {
+                $message = __('password.invalid');
             } else {
                 $item['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
             }
@@ -128,7 +133,7 @@ if (isset($_GET['saved'])): ?><div class="alert">Benutzer wurde gespeichert.</di
         <input type="hidden" name="id" value="<?= e($editUser['id'] ?? ''); ?>" />
         <div class="form-sections">
             <section class="form-section"><h3>Kontaktdaten</h3><div class="row two-col"><label>Vorname<input type="text" name="first_name" value="<?= e($editUser['first_name'] ?? ''); ?>" required /></label><label>Nachname<input type="text" name="last_name" value="<?= e($editUser['last_name'] ?? ''); ?>" required /></label></div><label>E-Mail-Adresse<input type="email" name="email" value="<?= e($editUser['email'] ?? ''); ?>" required /></label></section>
-            <section class="form-section"><h3>Rolle &amp; Passwort</h3><div class="row two-col"><label>Rolle<select name="role"><option value="user" <?= (($editUser['role'] ?? 'user') === 'user') ? 'selected' : ''; ?>>Benutzer</option><option value="admin" <?= (($editUser['role'] ?? 'admin') === 'admin') ? 'selected' : ''; ?>>Administrator</option></select></label><label>Passwort<?= $editUser ? ' (optional ändern)' : ''; ?><input type="password" name="password" minlength="8" <?= $editUser ? '' : 'required'; ?> /></label></div><?php if ($editUser && in_array(Auth::accountStatus($editUser), [Auth::STATUS_PENDING_APPROVAL, Auth::STATUS_DEACTIVATED], true)): ?><p class="form-hint">Dieses Konto ist <?= Auth::accountStatus($editUser) === Auth::STATUS_PENDING_APPROVAL ? 'zur Freigabe bereit' : 'deaktiviert'; ?>. Die ausgewählte Rolle wird beim Aktivieren übernommen.</p><?php endif; ?></section>
+            <section class="form-section"><h3>Rolle &amp; Passwort</h3><div class="row two-col"><label>Rolle<select name="role"><option value="user" <?= (($editUser['role'] ?? 'user') === 'user') ? 'selected' : ''; ?>>Benutzer</option><option value="admin" <?= (($editUser['role'] ?? 'admin') === 'admin') ? 'selected' : ''; ?>>Administrator</option></select></label><label>Passwort<?= $editUser ? ' (optional ändern)' : ''; ?><input type="password" name="password" minlength="12" <?= $editUser ? '' : 'required'; ?> /></label></div><div class="row two-col"><label><?= e(__('form.password_confirm')); ?><input type="password" name="password_confirm" minlength="12" <?= $editUser ? '' : 'required'; ?> /></label></div><?php passwordRequirements(optional: $editUser !== null); ?><?php if ($editUser && in_array(Auth::accountStatus($editUser), [Auth::STATUS_PENDING_APPROVAL, Auth::STATUS_DEACTIVATED], true)): ?><p class="form-hint">Dieses Konto ist <?= Auth::accountStatus($editUser) === Auth::STATUS_PENDING_APPROVAL ? 'zur Freigabe bereit' : 'deaktiviert'; ?>. Die ausgewählte Rolle wird beim Aktivieren übernommen.</p><?php endif; ?></section>
             <section class="form-section"><h3>Emoticon</h3><?php emojiPicker($emojiGroups, (string) ($editUser['emoji'] ?? '')); ?></section>
         </div>
         <div class="row two-col"><button type="submit" name="action" value="save_user">Benutzer speichern</button><?php if ($editUser && in_array(Auth::accountStatus($editUser), [Auth::STATUS_PENDING_APPROVAL, Auth::STATUS_DEACTIVATED], true)): ?><button type="submit" name="action" value="activate_user" class="button-secondary"><?= Auth::accountStatus($editUser) === Auth::STATUS_PENDING_APPROVAL ? 'Freigeben' : 'Reaktivieren'; ?></button><?php endif; ?></div>
@@ -138,4 +143,5 @@ if (isset($_GET['saved'])): ?><div class="alert">Benutzer wurde gespeichert.</di
 <?php if (!$users): ?><tr><td colspan="7">Noch keine Benutzer erfasst.</td></tr><?php endif; ?>
 <?php foreach ($users as $user): ?><?php $status = Auth::accountStatus($user); ?><tr><td class="emoji-cell"><?= e($user['emoji'] ?? ''); ?></td><td><?= e($user['first_name'] ?? ''); ?></td><td><?= e($user['last_name'] ?? ''); ?></td><td><?= e($user['email'] ?? ''); ?></td><td><?= ($user['role'] ?? 'admin') === 'admin' ? 'Administrator' : 'Benutzer'; ?></td><td><?= e(match ($status) { Auth::STATUS_PENDING_VERIFICATION => 'E-Mail-Bestätigung ausstehend', Auth::STATUS_PENDING_APPROVAL => 'Freigabe ausstehend', Auth::STATUS_DEACTIVATED => 'Deaktiviert', default => 'Aktiv' }); ?></td><td><a class="button-link" href="/users.php?edit=<?= (int) ($user['id'] ?? 0); ?>">Bearbeiten</a><?php if ($status === Auth::STATUS_ACTIVE): ?><form method="post" class="action-form" data-confirm="Konto wirklich deaktivieren? Die zugeordneten Geräte werden archiviert."><input type="hidden" name="action" value="deactivate_user" /><input type="hidden" name="id" value="<?= (int) ($user['id'] ?? 0); ?>" /><button type="submit" class="button-secondary">Deaktivieren</button></form><?php elseif ($status === Auth::STATUS_DEACTIVATED): ?><form method="post" class="action-form" data-confirm="Deaktiviertes Konto endgültig löschen? Die archivierten Geräte bleiben erhalten, werden aber nicht mehr zugeordnet."><input type="hidden" name="action" value="delete_deactivated_user" /><input type="hidden" name="id" value="<?= (int) ($user['id'] ?? 0); ?>" /><button type="submit" class="button-danger">Endgültig löschen</button></form><?php endif; ?></td></tr><?php endforeach; ?>
 </tbody></table></div></section>
+<script src="/assets/password-requirements.js"></script>
 <?php pageFooter();

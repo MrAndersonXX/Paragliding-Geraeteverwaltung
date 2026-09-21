@@ -4,11 +4,13 @@ require __DIR__ . '/_layout.php';
 require_once __DIR__ . '/../src/EmojiCatalog.php';
 require_once __DIR__ . '/../src/Auth.php';
 require_once __DIR__ . '/../src/NotificationService.php';
+require_once __DIR__ . '/_password_requirements.php';
 
 use Glider\Storage;
 use Glider\EmojiCatalog;
 use Glider\Auth;
 use Glider\NotificationService;
+use Glider\PasswordPolicy;
 
 const EMAIL_CODE_TTL_SECONDS = 900;
 const EMAIL_CODE_MAX_ATTEMPTS = 5;
@@ -28,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update_profile') {
     $lastName = trim((string) ($_POST['last_name'] ?? ''));
     $email = trim((string) ($_POST['email'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
+    $passwordConfirm = (string) ($_POST['password_confirm'] ?? '');
     $selectedEmoji = trim((string) ($_POST['emoji'] ?? ''));
 
     $emailTaken = false;
@@ -44,8 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update_profile') {
     } elseif ($emailTaken) {
         $message = 'Diese E-Mail-Adresse wird bereits von einem anderen Benutzer verwendet.';
         $messageClass = 'alert alert-error';
-    } elseif ($password !== '' && strlen($password) < 8) {
-        $message = 'Das Passwort muss mindestens 8 Zeichen lang sein.';
+    } elseif ($password !== '' && !PasswordPolicy::isValid($password)) {
+        $message = __('password.invalid');
+        $messageClass = 'alert alert-error';
+    } elseif ($password !== '' && $password !== $passwordConfirm) {
+        $message = __('password.confirmation_mismatch');
         $messageClass = 'alert alert-error';
     } else {
         $fields = [
@@ -168,7 +174,11 @@ if (isset($_GET['saved'])): ?><div class="alert">Profil wurde gespeichert.</div>
             </section>
             <section class="form-section">
                 <h3>Passwort</h3>
-                <label>Neues Passwort (optional ändern)<input type="password" name="password" minlength="8" /></label>
+                <div class="row two-col">
+                    <label>Neues Passwort (optional ändern)<input type="password" name="password" minlength="12" /></label>
+                    <label><?= e(__('form.password_confirm')); ?><input type="password" name="password_confirm" minlength="12" /></label>
+                </div>
+                <?php passwordRequirements(optional: true); ?>
             </section>
             <section class="form-section">
                 <h3>Emoticon</h3>
@@ -204,4 +214,5 @@ if (isset($_GET['saved'])): ?><div class="alert">Profil wurde gespeichert.</div>
         <button type="submit" class="button-danger">Profil deaktivieren</button>
     </form>
 </section>
+<script src="/assets/password-requirements.js"></script>
 <?php pageFooter();

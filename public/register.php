@@ -4,9 +4,11 @@ require_once __DIR__ . '/../src/Storage.php';
 require_once __DIR__ . '/../src/I18n.php';
 require_once __DIR__ . '/../src/Auth.php';
 require_once __DIR__ . '/../src/NotificationService.php';
+require_once __DIR__ . '/_password_requirements.php';
 
 use Glider\Auth;
 use Glider\NotificationService;
+use Glider\PasswordPolicy;
 use Glider\Storage;
 
 const REGISTRATION_CODE_TTL_SECONDS = 900;
@@ -45,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
     $lastName = trim((string) ($_POST['last_name'] ?? ''));
     $email = trim((string) ($_POST['email'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
+    $passwordConfirm = (string) ($_POST['password_confirm'] ?? '');
     $emailTaken = false;
     foreach ($users as $user) {
         if (strcasecmp((string) ($user['email'] ?? ''), $email) === 0) {
@@ -56,8 +59,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
         $message = __('register.required_fields');
     } elseif ($emailTaken) {
         $message = __('register.email_taken');
-    } elseif (strlen($password) < 8) {
-        $message = __('register.password_short');
+    } elseif (!PasswordPolicy::isValid($password)) {
+        $message = __('password.invalid');
+    } elseif ($password !== $passwordConfirm) {
+        $message = __('password.confirmation_mismatch');
     } else {
         $code = (string) random_int(100000, 999999);
         $settings = Storage::readSettings();
@@ -164,6 +169,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
 <form method="post" class="stacked-form"><input type="hidden" name="action" value="confirm_code" /><label><?= htmlspecialchars(__('register.confirmation_code'), ENT_QUOTES, 'UTF-8'); ?><input type="text" name="code" class="otp-input" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autofocus /></label><button type="submit"><?= htmlspecialchars(__('register.confirm_code'), ENT_QUOTES, 'UTF-8'); ?></button></form>
 <form method="post" class="action-form"><input type="hidden" name="action" value="resend_code" /><button type="submit" class="button-secondary"><?= htmlspecialchars(__('register.resend_code'), ENT_QUOTES, 'UTF-8'); ?></button></form>
 <?php elseif (!isset($_GET['approved'])): ?>
-<form method="post" class="stacked-form"><input type="hidden" name="action" value="register" /><div class="row two-col"><label><?= htmlspecialchars(__('form.first_name'), ENT_QUOTES, 'UTF-8'); ?><input type="text" name="first_name" required autofocus /></label><label><?= htmlspecialchars(__('form.last_name'), ENT_QUOTES, 'UTF-8'); ?><input type="text" name="last_name" required /></label></div><label><?= htmlspecialchars(__('form.email'), ENT_QUOTES, 'UTF-8'); ?><input type="email" name="email" required /></label><label><?= htmlspecialchars(__('form.password'), ENT_QUOTES, 'UTF-8'); ?><input type="password" name="password" minlength="8" required /></label><button type="submit"><?= htmlspecialchars(__('register.request_code'), ENT_QUOTES, 'UTF-8'); ?></button></form>
+<form method="post" class="stacked-form"><input type="hidden" name="action" value="register" /><div class="row two-col"><label><?= htmlspecialchars(__('form.first_name'), ENT_QUOTES, 'UTF-8'); ?><input type="text" name="first_name" required autofocus /></label><label><?= htmlspecialchars(__('form.last_name'), ENT_QUOTES, 'UTF-8'); ?><input type="text" name="last_name" required /></label></div><label><?= htmlspecialchars(__('form.email'), ENT_QUOTES, 'UTF-8'); ?><input type="email" name="email" required /></label><div class="row two-col"><label><?= htmlspecialchars(__('form.password'), ENT_QUOTES, 'UTF-8'); ?><input type="password" name="password" minlength="12" required /></label><label><?= htmlspecialchars(__('form.password_confirm'), ENT_QUOTES, 'UTF-8'); ?><input type="password" name="password_confirm" minlength="12" required /></label></div><?php passwordRequirements(); ?><button type="submit"><?= htmlspecialchars(__('register.request_code'), ENT_QUOTES, 'UTF-8'); ?></button></form>
 <?php endif; ?>
-<p class="form-hint"><a href="/login.php"><?= htmlspecialchars(__('register.login'), ENT_QUOTES, 'UTF-8'); ?></a></p></section></main></body></html>
+<p class="form-hint"><a href="/login.php"><?= htmlspecialchars(__('register.login'), ENT_QUOTES, 'UTF-8'); ?></a></p></section></main><script src="/assets/password-requirements.js"></script></body></html>

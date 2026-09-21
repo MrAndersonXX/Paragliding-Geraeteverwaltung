@@ -1636,6 +1636,7 @@ tbody tr:hover {
     align-items: center;
     display: flex;
     gap: 0.75rem;
+    min-height: 14rem;
     position: relative;
 }
 
@@ -1644,8 +1645,12 @@ tbody tr:hover {
     border: 2px solid #e1e9f1;
     border-radius: 12px;
     cursor: pointer;
+    align-self: stretch;
+    flex: 1 1 auto;
+    height: auto;
     padding: 0;
     overflow: hidden;
+    width: auto;
 }
 
 .equipment-photo-button:hover,
@@ -1656,14 +1661,20 @@ tbody tr:hover {
 .equipment-photo {
     background: #f4f7fb;
     color: #5c7891;
-    display: flex;
+    display: block;
     align-items: center;
     justify-content: center;
     font-size: 0.8rem;
     aspect-ratio: 1;
-    height: 14rem;
-    width: 14rem;
+    height: 100%;
     object-fit: cover;
+    width: 100%;
+}
+
+.equipment-photo-placeholder {
+    align-items: center;
+    display: flex;
+    justify-content: center;
 }
 
 .equipment-photo-section .info-field {
@@ -1737,9 +1748,14 @@ tbody tr:hover {
 }
 
 @media (max-width: 700px) {
+    .equipment-photo-button {
+        flex-basis: auto;
+        min-height: 11rem;
+    }
+
     .equipment-photo {
-        height: 11rem;
-        width: 11rem;
+        height: 100%;
+        width: 100%;
     }
 
     .image-viewer-overlay {

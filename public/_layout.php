@@ -56,18 +56,19 @@ function pageHeader(string $title): void
                 <span class="sidebar-user-name"><?= e(trim(($currentUser['first_name'] ?? '') . ' ' . ($currentUser['last_name'] ?? ''))); ?></span>
                 <span class="role-badge"><?= e((($currentUser['role'] ?? 'admin') === 'admin') ? __('nav.administrator') : __('nav.user')); ?></span>
             </a>
-            <div class="language-switcher" aria-label="<?= e(__('language.choose')); ?>">
-                <?php foreach (I18n::locales() as $language => $languageInfo): ?>
-                    <form method="post" action="/language.php">
-                        <input type="hidden" name="language" value="<?= e($language); ?>" />
-                        <input type="hidden" name="redirect" value="<?= e($_SERVER['REQUEST_URI'] ?? '/'); ?>" />
-                        <button type="submit" class="language-option<?= $locale === $language ? ' active' : ''; ?>" aria-label="<?= e($languageInfo['label']); ?>" title="<?= e($languageInfo['label']); ?>">
-                            <span aria-hidden="true"><?= e($languageInfo['flag']); ?></span>
-                            <span><?= e($languageInfo['label']); ?></span>
-                        </button>
-                    </form>
-                <?php endforeach; ?>
-            </div>
+            <details class="language-switcher">
+                <summary aria-label="<?= e(__('language.choose')); ?>" title="<?= e(__('language.choose')); ?>"><span aria-hidden="true"><?= e(I18n::locales()[$locale]['flag']); ?></span></summary>
+                <div class="language-options">
+                    <?php foreach (I18n::locales() as $language => $languageInfo): ?>
+                        <?php if ($language === $locale) { continue; } ?>
+                        <form method="post" action="/language.php">
+                            <input type="hidden" name="language" value="<?= e($language); ?>" />
+                            <input type="hidden" name="redirect" value="<?= e($_SERVER['REQUEST_URI'] ?? '/'); ?>" />
+                            <button type="submit" class="language-option" aria-label="<?= e($languageInfo['label']); ?>" title="<?= e($languageInfo['label']); ?>"><span aria-hidden="true"><?= e($languageInfo['flag']); ?></span></button>
+                        </form>
+                    <?php endforeach; ?>
+                </div>
+            </details>
             <a href="/logout.php"><?= e(__('nav.logout')); ?></a>
         </div>
     </aside>

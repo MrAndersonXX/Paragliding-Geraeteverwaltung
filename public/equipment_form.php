@@ -321,13 +321,8 @@ pageHeader($editMode ? ($editItem ? __('page.equipment_edit') : __('page.equipme
         </section>
         <section class="detail-section">
             <h3>Dokumente</h3>
-            <?php if ($equipmentDocuments === []): ?><p class="form-hint">Noch keine Dokumente hinterlegt.</p><?php else: ?><div class="table-wrap documents-table-wrap"><table class="documents-table"><thead><tr><th>Datei</th><th>Kategorie</th><th>Hochgeladen</th><th>Aktionen</th></tr></thead><tbody><?php foreach ($equipmentDocuments as $document): ?><?php $categoryName = 'Unbekannt'; foreach ($documentCategories as $category) { if ((int) ($category['id'] ?? 0) === (int) ($document['category_id'] ?? 0)) { $categoryName = (string) ($category['name'] ?? $categoryName); break; } } ?><tr><td data-label="Datei"><?= e($document['original_name'] ?? 'Dokument'); ?></td><td data-label="Kategorie"><?= e($categoryName); ?></td><td data-label="Hochgeladen"><?= e(date('d.m.Y H:i', strtotime((string) ($document['uploaded_at'] ?? 'now')))); ?></td><td data-label="Aktionen" class="actions"><a class="button-link" href="/equipment_document.php?id=<?= (int) ($document['id'] ?? 0); ?>&equipment_id=<?= (int) $editItem['id']; ?>">Öffnen</a><form method="post" class="action-form" data-confirm="Dokument wirklich löschen?"><input type="hidden" name="action" value="delete_document" /><input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" /><input type="hidden" name="document_id" value="<?= (int) ($document['id'] ?? 0); ?>" /><button type="submit" class="button-danger">Löschen</button></form></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
-            <form method="post" class="stacked-form document-upload-form" enctype="multipart/form-data">
-                <input type="hidden" name="action" value="upload_documents" />
-                <input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" />
-                <div id="equipment-document-upload-list"><div class="document-upload-row"><input type="file" name="documents[]" accept=".pdf,.jpg,.jpeg,.png,.webp,.txt" /><select name="document_category_ids[]"><option value="">Dokumentenkategorie wählen</option><?php foreach ($documentCategories as $category): ?><option value="<?= (int) ($category['id'] ?? 0); ?>"><?= e($category['name'] ?? ''); ?></option><?php endforeach; ?></select></div></div>
-                <div class="button-row"><button type="button" class="button-muted" id="add-equipment-document">Weiteres Dokument</button><button type="submit">Dokumente speichern</button></div>
-            </form>
+            <?php if ($equipmentDocuments === []): ?><p class="form-hint">Noch keine Dokumente hinterlegt.</p><?php else: ?><div class="table-wrap documents-table-wrap"><table class="documents-table"><thead><tr><th>Datei</th><th>Kategorie</th><th>Hochgeladen</th><th>Aktionen</th></tr></thead><tbody><?php foreach ($equipmentDocuments as $document): ?><?php $categoryName = 'Unbekannt'; foreach ($documentCategories as $category) { if ((int) ($category['id'] ?? 0) === (int) ($document['category_id'] ?? 0)) { $categoryName = (string) ($category['name'] ?? $categoryName); break; } } ?><tr><td data-label="Datei"><a class="document-file-link" href="/equipment_document.php?id=<?= (int) ($document['id'] ?? 0); ?>&amp;equipment_id=<?= (int) $editItem['id']; ?>" title="Dokument öffnen"><?= e($document['original_name'] ?? 'Dokument'); ?></a></td><td data-label="Kategorie"><?= e($categoryName); ?></td><td data-label="Hochgeladen"><?= e(date('d.m.Y H:i', strtotime((string) ($document['uploaded_at'] ?? 'now')))); ?></td><td data-label="Aktionen" class="actions"><form method="post" class="action-form" data-confirm="Dokument wirklich löschen?"><input type="hidden" name="action" value="delete_document" /><input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" /><input type="hidden" name="document_id" value="<?= (int) ($document['id'] ?? 0); ?>" /><button type="submit" class="document-delete-button" aria-label="Dokument löschen" title="Dokument löschen"><span aria-hidden="true">🗑</span></button></form></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
+            <button type="button" class="button-link document-add-button" data-open-document-upload>Dokument hinzufügen</button>
         </section>
         <section class="detail-section timeline-section">
             <h3>Zeitstrahl</h3>
@@ -352,6 +347,17 @@ pageHeader($editMode ? ($editItem ? __('page.equipment_edit') : __('page.equipme
             <button type="button" class="image-viewer-image" data-close-image-viewer aria-label="Artikelbild verkleinern">
                 <img src="/equipment_image.php?id=<?= (int) ($editItem['id'] ?? 0); ?>" alt="Artikelbild <?= e($editItem['name'] ?? ''); ?>" />
             </button>
+        </div>
+    </div>
+    <div class="document-upload-overlay" data-document-upload hidden>
+        <div class="document-upload-modal" role="dialog" aria-modal="true" aria-labelledby="document-upload-title">
+            <div class="image-picker-header"><h3 id="document-upload-title">Dokument hinzufügen</h3><button type="button" class="button-secondary" data-close-document-upload>Schließen</button></div>
+            <form method="post" class="stacked-form document-upload-form" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="upload_documents" />
+                <input type="hidden" name="id" value="<?= (int) $editItem['id']; ?>" />
+                <div id="equipment-document-upload-list"><div class="document-upload-row"><input type="file" name="documents[]" accept=".pdf,.jpg,.jpeg,.png,.webp,.txt" required /><select name="document_category_ids[]" required><option value="">Dokumentenkategorie wählen</option><?php foreach ($documentCategories as $category): ?><option value="<?= (int) ($category['id'] ?? 0); ?>"><?= e($category['name'] ?? ''); ?></option><?php endforeach; ?></select></div></div>
+                <div class="button-row"><button type="button" class="button-muted" id="add-equipment-document">Weiteres Dokument</button><button type="submit">Dokumente speichern</button></div>
+            </form>
         </div>
     </div>
 <?php endif; ?>
@@ -427,6 +433,9 @@ const imagePickerBody = document.querySelector('[data-image-picker-body]');
 const imagePickerCloseButton = document.querySelector('[data-close-image-picker]');
 const imageViewerTrigger = document.querySelector('[data-open-image-viewer]');
 const imageViewerOverlay = document.querySelector('[data-image-viewer]');
+const documentUploadTrigger = document.querySelector('[data-open-document-upload]');
+const documentUploadOverlay = document.querySelector('[data-document-upload]');
+const documentUploadCloseButton = document.querySelector('[data-close-document-upload]');
 
 const closeImagePicker = function () {
     if (imagePickerOverlay) {
@@ -436,6 +445,11 @@ const closeImagePicker = function () {
 const closeImageViewer = function () {
     if (imageViewerOverlay) {
         imageViewerOverlay.hidden = true;
+    }
+};
+const closeDocumentUpload = function () {
+    if (documentUploadOverlay) {
+        documentUploadOverlay.hidden = true;
     }
 };
 
@@ -533,10 +547,21 @@ imageViewerOverlay?.addEventListener('click', function (event) {
         closeImageViewer();
     }
 });
+documentUploadTrigger?.addEventListener('click', function () {
+    documentUploadOverlay.hidden = false;
+    documentUploadOverlay.querySelector('input[type="file"]')?.focus();
+});
+documentUploadCloseButton?.addEventListener('click', closeDocumentUpload);
+documentUploadOverlay?.addEventListener('click', function (event) {
+    if (event.target === documentUploadOverlay) {
+        closeDocumentUpload();
+    }
+});
 document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') {
         closeImagePicker();
         closeImageViewer();
+        closeDocumentUpload();
     }
 });
 </script>

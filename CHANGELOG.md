@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Changed
+- Enlarged the equipment image viewer and streamlined document actions with filename links, an icon-only delete action and an upload dialog.
 - Updated the Docker publishing workflow to Node-24-compatible GitHub Actions.
 - Refined the application-wide visual design with consistent typography, spacing, control sizes, cards and responsive layouts.
 

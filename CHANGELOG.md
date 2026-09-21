@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Changed
+- Began a visual refinement of the application with a denser grid, lighter surfaces, compact controls and more precise spacing.
 - The equipment image viewer now fills its frame and document links open in a new browser tab.
 - Docker publishing now uses the pinned Ubuntu 24.04 GitHub Actions runner.
 - Enlarged the equipment image viewer and streamlined document actions with filename links, an icon-only delete action and an upload dialog.

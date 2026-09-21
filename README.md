@@ -18,7 +18,7 @@ Ein Docker-basierter Web-Server für die Verwaltung und Überwachung von Gleitsc
 - Import/Export aller Daten, Einstellungen, Benutzer, Bilder und angehängten Dateien als ein ZIP-Archiv
 - Synology-/Dockhand-kompatibles Docker-Setup: Images werden aus GitHub Container Registry gezogen, auf dem NAS bleiben nur `docker-compose.yml` und der Ordner `data`
 
-Version: 0.8.0
+Version: 0.8.1
 
 ## Überblick
 
@@ -235,6 +235,8 @@ docker compose down
 
 Für die Synology liegt `docker-compose.synology.yml` bereit. Sie zieht die fertigen App- und Nginx-Images aus GitHub Container Registry; auf dem NAS wird nichts mehr gebaut und es muss kein Quellcode mehr übertragen werden. Im Projektordner bleiben nur die aktive `docker-compose.yml` und der Ordner `data`.
 
+Diese Umgebung ist die Produktion. Sie läuft auf Port `8282`, verwendet ausschließlich GHCR-Images mit dem Tag `latest` und bindet nur den Datenordner ein. Codeänderungen werden dort erst wirksam, nachdem GitHub Actions neue Images veröffentlicht hat und der Stack auf der Synology aktualisiert wurde.
+
 Empfohlener NAS-Pfad:
 
 ```text
@@ -292,6 +294,35 @@ cd /volume1/docker/glider-manager
 docker compose pull
 docker compose up -d --remove-orphans
 ```
+
+## Synology-Entwicklung mit Live-Sync
+
+Für Entwicklung und Tests gibt es eine getrennte Umgebung unter:
+
+```text
+\\DS1\docker\glider-manager_dev
+```
+
+Diese Umgebung nutzt `docker-compose.synology.dev.yml`, läuft auf Port `8383` und bindet den Anwendungscode live ein. Normale Änderungen an `public`, `src` und `config` werden nach dem Dateisync ohne Stack-Neustart sichtbar. Die Dev-Daten liegen im eigenen Ordner `storage` unterhalb von `glider-manager_dev` und sind vollständig von den Produktionsdaten unter `glider-manager\data` getrennt.
+
+Die Dev-Umgebung wird mit dem Sync-Skript aktualisiert:
+
+```powershell
+.\scripts\sync-dev.ps1
+```
+
+Das Skript synchronisiert die Code- und Konfigurationsdateien nach `\\DS1\docker\glider-manager_dev`, erstellt den Ordner `storage` bei Bedarf und kopiert `docker-compose.synology.dev.yml` dort als `compose.yaml`. Es spiegelt den Storage-Ordner nicht und kopiert keine Produktionsdaten.
+
+Erster Start der Dev-Umgebung auf der Synology:
+
+```bash
+cd /volume1/docker/glider-manager_dev
+docker compose up -d
+```
+
+Danach ist die Dev-Anwendung unter `http://<synology-ip>:8383` erreichbar. Da Dev leer startet, erscheint dort der Einrichtungs-Wizard separat von der Produktion.
+
+Nicht jede Änderung ist live sichtbar: Änderungen an Dockerfiles, PHP-Erweiterungen, Composer-Abhängigkeiten oder Nginx-Konfiguration benötigen weiterhin einen neuen Image-Build beziehungsweise einen Container-Neustart.
 
 Ein Schreibtest prüft, ob der NAS-Datenordner korrekt eingebunden und beschreibbar ist:
 

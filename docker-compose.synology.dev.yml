@@ -1,0 +1,29 @@
+# Synology / Dockhand development deployment.
+#
+# Runs the app on port 8383 with live bind mounts for code. The development
+# storage folder is local to this directory and must stay separate from the
+# production data folder in ../glider-manager.
+services:
+  app:
+    image: ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-app:latest
+    pull_policy: always
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      TZ: Europe/Berlin
+    volumes:
+      - ./public:/var/www/html/public
+      - ./src:/var/www/html/src
+      - ./config:/var/www/html/config
+      - ./storage:/var/www/html/storage
+
+  nginx:
+    image: ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-nginx:latest
+    pull_policy: always
+    restart: unless-stopped
+    ports:
+      - "8383:80"
+    volumes:
+      - ./public:/var/www/html/public:ro
+    depends_on:
+      - app

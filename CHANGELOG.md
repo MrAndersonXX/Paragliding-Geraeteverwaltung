@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-09-21
+
+### Added
+- Added a Synology development compose file for a separate live-synced dev environment on port 8383 with independent storage.
+- Added a PowerShell sync script for updating `\\DS1\docker\glider-manager_dev` without mirroring data folders.
+
+### Changed
+- Documented the split between GHCR-only production deployment and live-synced Synology development deployment.
+
 ## [0.8.0] - 2026-09-21
 
 ### Added

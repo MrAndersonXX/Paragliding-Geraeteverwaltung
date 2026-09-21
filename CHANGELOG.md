@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Refined the application-wide visual design with consistent typography, spacing, control sizes, cards and responsive layouts.
+
 ### Added
 - Added document upload, display, opening and deletion directly in the equipment details.
 - Added automatic selection of the `Prüfprotokoll` category when starting an inspection from the equipment list.

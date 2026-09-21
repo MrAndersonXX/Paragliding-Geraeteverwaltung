@@ -1,6 +1,6 @@
 <?php
 
-namespace Glider;
+namespace Glider {
 
 class I18n
 {
@@ -93,7 +93,11 @@ class I18n
     }
 }
 
-function __(string $key, array $replace = []): string
-{
-    return I18n::translate($key, $replace);
+}
+
+namespace {
+    function __(string $key, array $replace = []): string
+    {
+        return \Glider\I18n::translate($key, $replace);
+    }
 }

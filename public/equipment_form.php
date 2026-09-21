@@ -176,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-pageHeader($editMode ? ($editItem ? __('page.equipment_edit') : __('page.equipment_new') : __('page.equipment_details'));
+pageHeader($editMode ? ($editItem ? __('page.equipment_edit') : __('page.equipment_new')) : __('page.equipment_details'));
 ?>
 <?php if ($message !== ''): ?><div class="alert"><?= e($message); ?></div><?php endif; ?>
 <section class="card edit-surface">

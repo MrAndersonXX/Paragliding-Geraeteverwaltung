@@ -1571,8 +1571,9 @@ tbody tr:hover {
     align-items: center;
     justify-content: center;
     font-size: 0.8rem;
-    height: 9rem;
-    width: 9rem;
+    aspect-ratio: 1;
+    height: 14rem;
+    width: 14rem;
     object-fit: cover;
 }
 
@@ -1596,11 +1597,11 @@ tbody tr:hover {
 
 .image-viewer-overlay {
     align-items: center;
-    background: transparent;
+    background: rgba(16, 42, 67, 0.55);
     display: flex;
     inset: 0;
     justify-content: center;
-    padding: 1.25rem;
+    padding: 3rem;
     position: fixed;
     z-index: 20;
 }
@@ -1612,25 +1613,29 @@ tbody tr:hover {
 .image-viewer-modal {
     align-items: center;
     display: flex;
+    height: min(90vh, 60rem);
     justify-content: center;
-    max-height: 90vh;
-    max-width: min(90vw, 70rem);
+    max-width: min(94vw, 90rem);
     position: relative;
+    width: 100%;
 }
 
 .image-viewer-image {
     background: transparent;
+    border: 0;
     display: block;
-    max-height: 90vh;
-    max-width: 90vw;
+    height: 100%;
+    max-height: 100%;
+    max-width: 100%;
     padding: 0;
+    width: 100%;
 }
 
 .image-viewer-image img {
     display: block;
     height: auto;
-    max-height: 90vh;
-    max-width: 90vw;
+    max-height: 100%;
+    max-width: 100%;
     object-fit: contain;
     width: auto;
 }
@@ -1639,6 +1644,22 @@ tbody tr:hover {
     position: absolute;
     right: 0.5rem;
     top: 0.5rem;
+    z-index: 1;
+}
+
+@media (max-width: 700px) {
+    .equipment-photo {
+        height: 11rem;
+        width: 11rem;
+    }
+
+    .image-viewer-overlay {
+        padding: 1rem;
+    }
+
+    .image-viewer-modal {
+        height: 90vh;
+    }
 }
 
 .image-picker-modal {

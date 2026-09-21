@@ -5,7 +5,7 @@
 # data is stored below ./data and mounted into the app as /var/www/html/storage.
 services:
   app:
-    image: ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-app:0.8.0
+    image: ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-app:latest
     pull_policy: always
     restart: unless-stopped
     working_dir: /var/www/html
@@ -15,7 +15,7 @@ services:
       - ./data:/var/www/html/storage
 
   nginx:
-    image: ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-nginx:0.8.0
+    image: ghcr.io/mrandersonxx/paragliding-geraeteverwaltung-nginx:latest
     pull_policy: always
     restart: unless-stopped
     ports:
